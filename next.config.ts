@@ -1,8 +1,8 @@
 import type { NextConfig } from "next";
 
+// Trigger Vercel build after setting project parameters
 const nextConfig: NextConfig = {
   typescript: {
-    // Disable strict typescript build check if needed, but we keep it standard
     ignoreBuildErrors: true,
   },
   eslint: {
