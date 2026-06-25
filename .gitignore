@@ -1,3 +1,10 @@
+# Next.js build output
+.next/
+out/
+
+# Dependency directories
+node_modules/
+
 # Logs
 logs
 *.log
@@ -7,18 +14,12 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-.output
-.vinxi
-.tanstack/**
-.nitro
-*.local
+# Database fallback local file
+rydex_db_fallback.json
 
-# Wrangler / Cloudflare
-.wrangler/
-.dev.vars
+# Local environment variables
+.env
+.env*.local
 
 # Editor directories and files
 .vscode/*
