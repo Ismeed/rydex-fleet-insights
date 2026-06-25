@@ -1,0 +1,18 @@
+{
+  "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/login/page": "app/login/page.js",
+  "/signup/page": "app/signup/page.js",
+  "/batches/page": "app/batches/page.js",
+  "/drivers/page": "app/drivers/page.js",
+  "/drivers/[id]/page": "app/drivers/[id]/page.js",
+  "/passengers/page": "app/passengers/page.js",
+  "/portal/page": "app/portal/page.js",
+  "/reports/page": "app/reports/page.js",
+  "/rewards/page": "app/rewards/page.js",
+  "/shifts/page": "app/shifts/page.js",
+  "/page": "app/page.js",
+  "/revenue/page": "app/revenue/page.js",
+  "/vehicles/page": "app/vehicles/page.js",
+  "/vehicles/[id]/page": "app/vehicles/[id]/page.js"
+}

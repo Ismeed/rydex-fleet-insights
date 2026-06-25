@@ -1,0 +1,147 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  OPERATIONS_OFFICER
+  PASSENGER
+}
+
+enum VehicleStatus {
+  ACTIVE
+  MAINTENANCE
+  OFFLINE
+}
+
+enum ShiftStatus {
+  ACTIVE
+  ENDED
+  LOW_PERF
+  FLAGGED
+}
+
+enum RewardCodeStatus {
+  UNUSED
+  REDEEMED
+  EXPIRED
+}
+
+enum RedemptionStatus {
+  PENDING_APPROVAL
+  DELIVERED
+  REJECTED
+}
+
+model User {
+  id            String    @id @default(uuid())
+  name          String
+  phone         String    @unique
+  password      String
+  role          UserRole  @default(PASSENGER)
+  points        Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  redemptions   RedemptionRequest[]
+  redeemedCodes RewardCode[]        @relation("RedeemedBy")
+}
+
+model Driver {
+  id             String    @id @default(uuid())
+  name           String
+  phone          String    @unique
+  address        String
+  guarantorName  String
+  guarantorPhone String
+  status         String    @default("active") // "active", "off-duty"
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  assignedVehicle Vehicle?
+  shifts          Shift[]
+  batches         CodeBatch[]
+  rewardCodes     RewardCode[]
+}
+
+model Vehicle {
+  id               String        @id @default(uuid())
+  vehicleNumber    String        @unique
+  vehicleType      String        @default("Keke Napep")
+  fuelType         String        @default("CNG") // CNG, EV
+  plateNumber      String        @unique
+  status           VehicleStatus @default(ACTIVE)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  assignedDriverId String?       @unique
+  assignedDriver   Driver?       @relation(fields: [assignedDriverId], references: [id])
+
+  shifts           Shift[]
+  batches          CodeBatch[]
+  rewardCodes      RewardCode[]
+}
+
+model Shift {
+  id              String      @id @default(uuid())
+  vehicleId       String
+  vehicle         Vehicle     @relation(fields: [vehicleId], references: [id])
+  driverId        String
+  driver          Driver      @relation(fields: [driverId], references: [id])
+  startTime       DateTime    @default(now())
+  endTime         DateTime?
+  startOdometer   Float
+  endOdometer     Float?
+  revenue         Float?      @default(0)
+  hoursWorked     Int?
+  minutesWorked   Int?
+  distanceCovered Float?
+  revenuePerHour  Float?
+  revenuePerKm    Float?
+  status          ShiftStatus @default(ACTIVE)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model CodeBatch {
+  id            String       @id @default(uuid())
+  batchNumber   String       @unique
+  codeCount     Int
+  vehicleId     String
+  vehicle       Vehicle      @relation(fields: [vehicleId], references: [id])
+  driverId      String
+  driver        Driver       @relation(fields: [driverId], references: [id])
+  dateGenerated DateTime     @default(now())
+  codes         RewardCode[]
+}
+
+model RewardCode {
+  id            String           @id @default(uuid())
+  code          String           @unique
+  status        RewardCodeStatus @default(UNUSED)
+  batchId       String
+  batch         CodeBatch        @relation(fields: [batchId], references: [id])
+  vehicleId     String
+  vehicle       Vehicle          @relation(fields: [vehicleId], references: [id])
+  driverId      String
+  driver        Driver           @relation(fields: [driverId], references: [id])
+  dateGenerated DateTime         @default(now())
+  redeemedDate  DateTime?
+  redeemedById  String?
+  redeemedBy    User?            @relation("RedeemedBy", fields: [redeemedById], references: [id])
+}
+
+model RedemptionRequest {
+  id              String           @id @default(uuid())
+  passengerId     String
+  passenger       User             @relation(fields: [passengerId], references: [id])
+  rewardRequested String
+  pointsUsed      Int
+  status          RedemptionStatus @default(PENDING_APPROVAL)
+  requestedAt     DateTime         @default(now())
+  processedAt     DateTime?
+}
