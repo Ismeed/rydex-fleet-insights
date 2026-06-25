@@ -149,7 +149,7 @@ export function PortalClient({ user, redemptions: initialRedemptions }: PortalCl
                     : "border-border bg-surface/50 opacity-40 cursor-not-allowed"
                 )}
               >
-                <Gift className={cn("size-4.5 sm:size-5 mb-1.5 sm:mb-2 transition-transform group-hover:scale-110", points >= r.cost ? "text-brand" : "text-muted-foreground")} />
+                <Gift className={cn("size-4 sm:size-5 mb-1.5 sm:mb-2 transition-transform group-hover:scale-110", points >= r.cost ? "text-brand" : "text-muted-foreground")} />
                 <div>
                   <p className="text-[11px] sm:text-xs font-bold text-foreground truncate max-w-full">{r.label}</p>
                   <p className="text-[9px] sm:text-[10px] text-muted-foreground font-mono mt-0.5 sm:mt-1 font-semibold">

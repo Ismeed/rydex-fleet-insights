@@ -209,7 +209,7 @@ export function AppShell({
       </aside>
 
       {/* Mobile Header */}
-      <header className="lg:hidden w-full h-16 bg-sidebar text-sidebar-foreground flex items-center justify-between px-4 fixed top-0 left-0 right-0 z-35 border-b border-sidebar-border">
+      <header className="lg:hidden w-full h-16 bg-sidebar text-sidebar-foreground flex items-center justify-between px-4 fixed top-0 left-0 right-0 z-40 border-b border-sidebar-border">
         <div className="flex items-center gap-2">
           <div className="size-8 bg-brand rounded grid place-items-center font-bold text-base text-brand-foreground">
             R
@@ -330,7 +330,7 @@ export function AppShell({
 
       {/* Main Layout Container */}
       <div className="flex-1 flex flex-col lg:pl-64 min-w-0">
-        <header className="hidden lg:flex h-16 border-b border-border bg-white items-center justify-between px-8 sticky top-0 z-15">
+        <header className="hidden lg:flex h-16 border-b border-border bg-white items-center justify-between px-8 sticky top-0 z-10">
           <div className="flex items-center gap-3 min-w-0">
             <div className="px-3 py-1 bg-surface border border-border rounded-md text-xs font-medium flex items-center gap-2 shrink-0">
               <span className="size-2 bg-brand-accent rounded-full animate-pulse" />
