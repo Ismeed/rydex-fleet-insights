@@ -56,13 +56,30 @@ export default async function VehicleOwnerPage() {
   const avgRevenuePerKm = totalDistance > 0 ? Math.round(totalRev / totalDistance) : 0;
   const avgRevenuePerHour = totalHours > 0 ? Math.round(totalRev / totalHours) : 0;
 
+  // Reward Engagement Calculations
+  const rewardCodes = await dbService.getRewardCodes();
+  const ownedCodes = rewardCodes.filter((c) => ownedVehicleIds.includes(c.vehicleId));
+  const totalCodes = ownedCodes.length;
+  const redeemedCodes = ownedCodes.filter((c) => c.status === "REDEEMED").length;
+  const engagementRate = totalCodes > 0 ? Math.round((redeemedCodes / totalCodes) * 100) : 0;
+
+  // Recent Activity: Last 5 shifts
+  const recentActivity = shifts.slice(0, 5).map((s) => ({
+    id: s.id,
+    vehicleId: s.vehicleId,
+    driverName: s.driver?.name || "Driver",
+    revenue: s.revenue || 0,
+    distanceCovered: s.distanceCovered || 0,
+    date: s.endTime || s.startTime,
+    status: s.status,
+  }));
+
   // Chart Data: Last 30 days revenue
   const revenue30d = Array.from({ length: 30 }, (_, i) => {
     const dayDate = new Date();
     dayDate.setDate(dayDate.getDate() - (29 - i));
     const dayLabel = dayDate.toLocaleDateString("en-US", { month: "short", day: "2-digit" });
     
-    // Sum shifts on this day
     const dayStart = new Date(dayDate);
     dayStart.setHours(0, 0, 0, 0);
     const dayEnd = new Date(dayDate);
@@ -74,35 +91,36 @@ export default async function VehicleOwnerPage() {
     });
     
     const daySum = dayShifts.reduce((sum, s) => sum + (s.revenue || 0), 0);
-    
-    // Fallback seed values specifically styled for owned vehiclesKT-001/002 to make the chart look nice
-    const seedBase = (totalOwned > 0 ? totalOwned : 2) * (8000 + Math.sin(i / 3) * 1500 + i * 100);
-    const fallbackRevenue = Math.round(seedBase + (Math.random() - 0.3) * 1000);
 
     return {
       label: dayLabel,
-      revenue: daySum > 0 ? daySum : fallbackRevenue,
+      revenue: daySum,
     };
   });
 
-  // Map total distance per vehicle
+  // Map total distance and total revenue per vehicle
   const vehiclesList = vehicles.map((v) => {
     const vehicleShifts = shifts.filter((s) => s.vehicleId === v.id);
     const dist = vehicleShifts.reduce((sum, s) => sum + (s.distanceCovered || 0), 0);
+    const rev = vehicleShifts.reduce((sum, s) => sum + (s.revenue || 0), 0);
     return {
       ...v,
       totalDistance: dist,
+      totalRevenue: rev,
     };
   });
 
   const kpis = {
     totalOwned,
     activeCount,
-    todayRevenue: todayRevenue > 0 ? todayRevenue : (totalOwned > 0 ? totalOwned * 8500 : 17000),
-    weeklyRevenue: weeklyRevenue > 0 ? weeklyRevenue : (totalOwned > 0 ? totalOwned * 60000 : 120000),
-    monthlyRevenue: monthlyRevenue > 0 ? monthlyRevenue : (totalOwned > 0 ? totalOwned * 240000 : 480000),
-    avgRevenuePerHour: avgRevenuePerHour > 0 ? avgRevenuePerHour : 1250,
-    avgRevenuePerKm: avgRevenuePerKm > 0 ? avgRevenuePerKm : 140,
+    todayRevenue,
+    weeklyRevenue,
+    monthlyRevenue,
+    avgRevenuePerHour,
+    avgRevenuePerKm,
+    totalCodes,
+    redeemedCodes,
+    engagementRate,
   };
 
   return (
@@ -111,6 +129,7 @@ export default async function VehicleOwnerPage() {
       kpis={kpis}
       revenue30d={revenue30d}
       vehiclesList={vehiclesList}
+      recentActivity={recentActivity}
     />
   );
 }

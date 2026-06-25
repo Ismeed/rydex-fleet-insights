@@ -34,39 +34,58 @@ const SEEDED_NAMES = [
 ];
 
 const getInitialData = (): FallbackData => {
-  const driversList = SEEDED_NAMES.map((name, i) => ({
+  const driversList = Array.from({ length: 10 }, (_, i) => ({
     id: `drv-${i + 1}`,
-    name,
+    name: [
+      "Musa Dahiru",
+      "Aisha Umar",
+      "Ibrahim Hassan",
+      "Fatima Bala",
+      "Sani Garba",
+      "Amina Yusuf",
+      "Bello Lawal",
+      "Hauwa Aliyu",
+      "Yusuf Mohammed",
+      "Zainab Sule",
+    ][i],
     phone: `+234 80${i} 555 0${100 + i}`,
     address: `Ward ${i + 1}, Katsina`,
     guarantorName: `Guarantor ${i + 1}`,
     guarantorPhone: `+234 80${i} 555 1${100 + i}`,
-    status: i < 8 ? "active" : "off-duty",
+    status: "active",
     avgPerDay: 9500 + i * 320,
     avgPerHour: 1100 + i * 25,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   }));
 
-  const vehiclesList = Array.from({ length: 10 }, (_, i) => ({
-    id: `ryd-kt-${String(i + 1).padStart(3, "0")}`,
-    vehicleNumber: `KT-${String(i + 1).padStart(3, "0")}`,
-    vehicleType: "Keke Napep",
-    fuelType: "CNG",
-    plateNumber: `KAT-${100 + i}-XA`,
-    status: i === 7 ? "MAINTENANCE" : i === 9 ? "OFFLINE" : "ACTIVE",
-    assignedDriverId: i < 8 ? `drv-${i + 1}` : null,
-    ownerId: i < 2 ? "u-owner1" : null, // Alhaji Musa owns vehicles KT-001 and KT-002
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  }));
+  const vehiclesList = Array.from({ length: 10 }, (_, i) => {
+    let ownerId = "u-owner1"; // Owner 1 owns 5 vehicles
+    if (i >= 5 && i < 8) ownerId = "u-owner2"; // Owner 2 owns 3 vehicles
+    if (i >= 8) ownerId = "u-owner3"; // Owner 3 owns 2 vehicles
+
+    return {
+      id: `ryd-kt-${String(i + 1).padStart(3, "0")}`,
+      vehicleNumber: `KT-${String(i + 1).padStart(3, "0")}`,
+      vehicleType: i % 3 === 0 ? "Mini-Bus" : "Keke Napep",
+      fuelType: i % 2 === 0 ? "CNG" : "EV",
+      plateNumber: `KAT-${100 + i}-XA`,
+      status: "ACTIVE",
+      assignedDriverId: `drv-${i + 1}`,
+      ownerId,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+  });
 
   const usersList = [
     {
       id: "u-admin",
       name: "Aminu Okafor",
       phone: "08012345678",
-      password: "password",
+      email: "admin@rydexmobility.com",
+      status: "active",
+      password: "Rydex123",
       role: "SUPER_ADMIN",
       points: 0,
       createdAt: new Date().toISOString(),
@@ -76,7 +95,9 @@ const getInitialData = (): FallbackData => {
       id: "u-officer",
       name: "Katsina Officer",
       phone: "08022222222",
-      password: "password",
+      email: "operations@rydexmobility.com",
+      status: "active",
+      password: "Rydex123",
       role: "OPERATIONS_OFFICER",
       points: 0,
       createdAt: new Date().toISOString(),
@@ -84,19 +105,47 @@ const getInitialData = (): FallbackData => {
     },
     {
       id: "u-passenger1",
-      name: "Ibrahim Bakare",
+      name: "Passenger User",
       phone: "08033333333",
-      password: "password",
+      email: "passenger@rydexmobility.com",
+      status: "active",
+      password: "Rydex123",
       role: "PASSENGER",
-      points: 120,
+      points: 150,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     },
     {
       id: "u-owner1",
-      name: "Alhaji Musa",
+      name: "CityView Katsina",
       phone: "08044444444",
-      password: "password",
+      email: "cityview@rydexmobility.com",
+      status: "active",
+      password: "Rydex123",
+      role: "VEHICLE_OWNER",
+      points: 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    {
+      id: "u-owner2",
+      name: "Aminu Transport",
+      phone: "08055555555",
+      email: "aminu@rydexmobility.com",
+      status: "active",
+      password: "Rydex123",
+      role: "VEHICLE_OWNER",
+      points: 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    {
+      id: "u-owner3",
+      name: "Northern Mobility Ventures",
+      phone: "08066666666",
+      email: "northern@rydexmobility.com",
+      status: "active",
+      password: "Rydex123",
       role: "VEHICLE_OWNER",
       points: 0,
       createdAt: new Date().toISOString(),
@@ -104,69 +153,140 @@ const getInitialData = (): FallbackData => {
     },
   ];
 
-  const shiftsList = [
+  const shiftsList: any[] = [];
+  const nowMs = Date.now();
+  
+  for (let i = 0; i < 45; i++) {
+    const vehicleIdx = i % 10;
+    const vehicleId = `ryd-kt-${String(vehicleIdx + 1).padStart(3, "0")}`;
+    const driverId = `drv-${vehicleIdx + 1}`;
+    
+    const dayOffset = Math.floor(i / 2) + 1; 
+    const startTimeDate = new Date(nowMs - dayOffset * 24 * 3600 * 1000 - (i % 3) * 4 * 3600 * 1000);
+    const durationHours = 5 + (i % 4) + Math.random();
+    const endTimeDate = new Date(startTimeDate.getTime() + durationHours * 3600 * 1000);
+    
+    const distance = 80 + (i % 5) * 15 + Math.random() * 8;
+    const revenue = 9000 + (i % 6) * 1600 + Math.floor(Math.random() * 1000);
+    
+    let status = "ENDED";
+    if (i === 12 || i === 27) {
+      status = "FLAGGED"; 
+    } else if (i === 5 || i === 34) {
+      status = "LOW_PERF";
+    }
+
+    shiftsList.push({
+      id: `s-hist-${i + 1}`,
+      vehicleId,
+      driverId,
+      startTime: startTimeDate.toISOString(),
+      endTime: endTimeDate.toISOString(),
+      startOdometer: 10000 + i * 150,
+      endOdometer: 10000 + i * 150 + parseFloat(distance.toFixed(1)),
+      revenue,
+      hoursWorked: Math.floor(durationHours),
+      minutesWorked: Math.floor((durationHours % 1) * 60),
+      distanceCovered: parseFloat(distance.toFixed(1)),
+      revenuePerHour: Math.round(revenue / durationHours),
+      revenuePerKm: Math.round(revenue / distance),
+      status,
+      createdAt: startTimeDate.toISOString(),
+      updatedAt: endTimeDate.toISOString(),
+    });
+  }
+
+  shiftsList.push(
     {
-      id: "s-1",
+      id: "s-active-1",
       vehicleId: "ryd-kt-001",
       driverId: "drv-1",
-      startTime: new Date(Date.now() - 6.5 * 3600 * 1000).toISOString(),
+      startTime: new Date(nowMs - 3.5 * 3600 * 1000).toISOString(),
       endTime: null,
       startOdometer: 12450.2,
       endOdometer: null,
-      revenue: 12450,
+      revenue: 0,
       status: "ACTIVE",
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     },
     {
-      id: "s-2",
-      vehicleId: "ryd-kt-002",
-      driverId: "drv-2",
-      startTime: new Date(Date.now() - 6.4 * 3600 * 1000).toISOString(),
+      id: "s-active-2",
+      vehicleId: "ryd-kt-006",
+      driverId: "drv-6",
+      startTime: new Date(nowMs - 2 * 3600 * 1000).toISOString(),
       endTime: null,
       startOdometer: 9821.7,
       endOdometer: null,
-      revenue: 11200,
+      revenue: 0,
       status: "ACTIVE",
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-    },
-    {
-      id: "s-7",
-      vehicleId: "ryd-kt-007",
-      driverId: "drv-7",
-      startTime: new Date(Date.now() - 5.8 * 3600 * 1000).toISOString(),
-      endTime: null,
-      startOdometer: 17891.3,
-      endOdometer: null,
-      revenue: 3900,
-      status: "LOW_PERF",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-  ];
+    }
+  );
 
   const batchesList = [
     {
       id: "b-1",
       batchNumber: "BAT-001",
-      codeCount: 5,
+      codeCount: 30,
       vehicleId: "ryd-kt-001",
       driverId: "drv-1",
-      dateGenerated: new Date().toISOString(),
+      dateGenerated: new Date(nowMs - 5 * 24 * 3600 * 1000).toISOString(),
     },
+    {
+      id: "b-2",
+      batchNumber: "BAT-002",
+      codeCount: 35,
+      vehicleId: "ryd-kt-006",
+      driverId: "drv-6",
+      dateGenerated: new Date(nowMs - 2 * 24 * 3600 * 1000).toISOString(),
+    }
   ];
 
-  const rewardCodesList = [
-    { id: "c-1", code: "RYD-7K4P9M", status: "UNUSED", batchId: "b-1", vehicleId: "ryd-kt-001", driverId: "drv-1", dateGenerated: new Date().toISOString() },
-    { id: "c-2", code: "RYD-B2X8QF", status: "UNUSED", batchId: "b-1", vehicleId: "ryd-kt-001", driverId: "drv-1", dateGenerated: new Date().toISOString() },
-    { id: "c-3", code: "RYD-X9L2TN", status: "UNUSED", batchId: "b-1", vehicleId: "ryd-kt-001", driverId: "drv-1", dateGenerated: new Date().toISOString() },
-    { id: "c-4", code: "RYD-4W1P7K", status: "UNUSED", batchId: "b-1", vehicleId: "ryd-kt-001", driverId: "drv-1", dateGenerated: new Date().toISOString() },
-    { id: "c-5", code: "RYD-L8T2N5", status: "UNUSED", batchId: "b-1", vehicleId: "ryd-kt-001", driverId: "drv-1", dateGenerated: new Date().toISOString() },
-  ];
+  const rewardCodesList: any[] = [];
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const makeCode = (idx: number) => {
+    let result = "";
+    for (let i = 0; i < 6; i++) {
+      result += chars.charAt((idx * 7 + i * 13) % chars.length);
+    }
+    return `RYD-${result}`;
+  };
+
+  for (let i = 0; i < 30; i++) {
+    const isRedeemed = i < 12;
+    rewardCodesList.push({
+      id: `c-b1-${i}`,
+      code: makeCode(i + 100),
+      status: isRedeemed ? "REDEEMED" : "UNUSED",
+      batchId: "b-1",
+      vehicleId: "ryd-kt-001",
+      driverId: "drv-1",
+      dateGenerated: new Date(nowMs - 5 * 24 * 3600 * 1000).toISOString(),
+      redeemedDate: isRedeemed ? new Date(nowMs - (i % 4) * 24 * 3600 * 1000).toISOString() : null,
+      redeemedById: isRedeemed ? "u-passenger1" : null,
+    });
+  }
+
+  for (let i = 0; i < 35; i++) {
+    const isRedeemed = i < 13;
+    rewardCodesList.push({
+      id: `c-b2-${i}`,
+      code: makeCode(i + 200),
+      status: isRedeemed ? "REDEEMED" : "UNUSED",
+      batchId: "b-2",
+      vehicleId: "ryd-kt-006",
+      driverId: "drv-6",
+      dateGenerated: new Date(nowMs - 2 * 24 * 3600 * 1000).toISOString(),
+      redeemedDate: isRedeemed ? new Date(nowMs - (i % 3) * 24 * 3600 * 1000).toISOString() : null,
+      redeemedById: isRedeemed ? "u-passenger1" : null,
+    });
+  }
 
   const redemptionsList = [
-    { id: "r-1", passengerId: "u-passenger1", rewardRequested: "₦100 Airtime", pointsUsed: 100, status: "PENDING_APPROVAL", requestedAt: new Date(Date.now() - 3600 * 1000).toISOString() },
+    { id: "r-1", passengerId: "u-passenger1", rewardRequested: "₦100 Airtime", pointsUsed: 100, status: "DELIVERED", requestedAt: new Date(nowMs - 4 * 3600 * 1000).toISOString(), processedAt: new Date(nowMs - 3.5 * 3600 * 1000).toISOString() },
+    { id: "r-2", passengerId: "u-passenger1", rewardRequested: "500MB Data", pointsUsed: 300, status: "PENDING_APPROVAL", requestedAt: new Date(nowMs - 1 * 3600 * 1000).toISOString(), processedAt: null },
   ];
 
   return {
@@ -178,7 +298,7 @@ const getInitialData = (): FallbackData => {
     rewardCodes: rewardCodesList,
     redemptions: redemptionsList,
   };
-};
+};;
 
 const loadFallbackData = (): FallbackData => {
   if (fs.existsSync(DB_FILE)) {
@@ -218,12 +338,63 @@ export const dbService = {
     return loadFallbackData().users.find((u) => u.phone === phone) || null;
   },
 
-  async createUser(data: { name: string; phone: string; password: string; role?: string }) {
+  async getUserByPhoneOrEmail(identifier: string) {
+    const cleanId = identifier.trim().toLowerCase();
+    if (isPrismaEnabled()) {
+      return await prisma.user.findFirst({
+        where: {
+          OR: [
+            { phone: identifier },
+            { email: cleanId }
+          ]
+        }
+      });
+    }
+    return loadFallbackData().users.find((u) => 
+      u.phone === identifier || 
+      (u.email && u.email.toLowerCase() === cleanId)
+    ) || null;
+  },
+
+  async updateUser(id: string, data: { name?: string; phone?: string; email?: string; status?: string; role?: string }) {
+    if (isPrismaEnabled()) {
+      return await prisma.user.update({
+        where: { id },
+        data: {
+          ...data,
+          role: data.role as any
+        }
+      });
+    }
+    const store = loadFallbackData();
+    const idx = store.users.findIndex((u) => u.id === id);
+    if (idx === -1) throw new Error("User not found");
+    const updated = {
+      ...store.users[idx],
+      ...data,
+      updatedAt: new Date().toISOString()
+    };
+    store.users[idx] = updated;
+    saveFallbackData(store);
+    return updated;
+  },
+
+  async suspendUser(id: string) {
+    return await this.updateUser(id, { status: "suspended" });
+  },
+
+  async unsuspendUser(id: string) {
+    return await this.updateUser(id, { status: "active" });
+  },
+
+  async createUser(data: { name: string; phone: string; email?: string; status?: string; password: string; role?: string }) {
     if (isPrismaEnabled()) {
       return await prisma.user.create({
         data: {
           name: data.name,
           phone: data.phone,
+          email: data.email || null,
+          status: data.status || "active",
           password: data.password,
           role: (data.role || "PASSENGER") as any,
           points: 0,
@@ -235,6 +406,8 @@ export const dbService = {
       id: `u-${Date.now()}`,
       name: data.name,
       phone: data.phone,
+      email: data.email || null,
+      status: data.status || "active",
       password: data.password,
       role: data.role || "PASSENGER",
       points: 0,

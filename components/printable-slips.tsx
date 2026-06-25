@@ -26,25 +26,34 @@ export function PrintableSlips({ codes }: PrintableSlipsProps) {
 
   return (
     <div className="hidden print:block print-container">
-      {/* Print Stylesheet */}
+      {/* Non-destructive Print Stylesheet using visibility override to fix blank print previews */}
       <style dangerouslySetInnerHTML={{ __html: `
         @media print {
           @page {
             size: A4 portrait;
             margin: 0mm;
           }
+          /* Hide all page contents by default */
+          body * {
+            visibility: hidden !important;
+          }
+          /* Show the print container and all its nested children */
+          .print-container, .print-container * {
+            visibility: visible !important;
+          }
           body {
             margin: 0 !important;
             padding: 0 !important;
             background: white !important;
           }
-          /* Hide everything else on page print */
-          body > :not(.print-container) {
-            display: none !important;
-          }
           .print-container {
             display: block !important;
-            width: 210mm;
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 210mm !important;
+            z-index: 99999 !important;
+            background: white !important;
           }
           .print-page {
             width: 210mm;
@@ -72,7 +81,7 @@ export function PrintableSlips({ codes }: PrintableSlipsProps) {
               key={index}
               style={{
                 border: "1px dashed #9CA3AF",
-                padding: "8px",
+                padding: "6px",
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "space-between",
@@ -88,22 +97,25 @@ export function PrintableSlips({ codes }: PrintableSlipsProps) {
                 <div style={{ fontWeight: 800, fontSize: "9px", color: "#15803D", letterSpacing: "-0.02em", lineHeight: "1" }}>
                   RYDEX MOBILITY
                 </div>
-                <div style={{ fontSize: "5px", color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.05em", marginTop: "2px" }}>
-                  Passenger Reward Slip
+                <div style={{ fontSize: "5px", color: "#374151", fontWeight: 600, marginTop: "2px", lineHeight: "1.1" }}>
+                  Thank You For Riding With Rydex
                 </div>
               </div>
 
-              <div style={{ margin: "4px 0", width: "100%", backgroundColor: "#F3F4F6", padding: "4px 0", borderRadius: "4px", border: "1px solid #E5E7EB" }}>
+              <div style={{ margin: "3px 0", width: "100%", backgroundColor: "#F3F4F6", padding: "3px 0", borderRadius: "4px", border: "1px solid #E5E7EB" }}>
                 <div style={{ fontSize: "4.5px", textTransform: "uppercase", fontWeight: 700, color: "#9CA3AF", letterSpacing: "0.02em" }}>Reward Code</div>
-                <div style={{ fontFamily: "monospace", fontWeight: 800, fontSize: "10px", color: "#111827", letterSpacing: "0.05em" }}>
+                <div style={{ fontFamily: "monospace", fontWeight: 800, fontSize: "10.5px", color: "#111827", letterSpacing: "0.05em" }}>
                   {code}
                 </div>
               </div>
 
               <div style={{ width: "100%" }}>
-                <div style={{ fontWeight: 700, fontSize: "5px", color: "#15803D" }}>www.rydexmobility.com</div>
-                <div style={{ fontSize: "4px", color: "#9CA3AF", lineHeight: "1.2" }}>
-                  Enter code to claim 10 points. Enjoy rewarding transit.
+                <div style={{ fontWeight: 700, fontSize: "5.5px", color: "#15803D" }}>www.rydexmobility.com</div>
+                <div style={{ fontSize: "4px", color: "#4B5563", fontWeight: 600, lineHeight: "1.1", marginTop: "1px" }}>
+                  Record this code and earn rewards.
+                </div>
+                <div style={{ fontSize: "3.2px", color: "#9CA3AF", lineHeight: "1", marginTop: "1px" }}>
+                  Keep riding with Rydex and enjoy affordable mobility.
                 </div>
               </div>
             </div>

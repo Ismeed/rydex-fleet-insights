@@ -88,13 +88,13 @@ export default function LoginPage() {
 
             <div className="space-y-1">
               <label htmlFor="phone" className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                Phone Number
+                Email or Phone Number
               </label>
               <input
                 id="phone"
                 name="phone"
                 type="text"
-                placeholder="e.g. 08012345678"
+                placeholder="e.g. cityview@rydexmobility.com or 08012345678"
                 required
                 className="w-full px-3 py-2 bg-surface border border-border rounded-md text-sm font-mono focus:ring-1 focus:ring-brand focus:border-brand outline-none transition-all"
               />
@@ -135,18 +135,24 @@ export default function LoginPage() {
           {/* Quick Demo Assist */}
           <div className="p-4 bg-surface border border-border rounded-xl space-y-2.5">
             <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-              Demo Credentials
+              Demo Workspace Logins (Pass: Rydex123)
             </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
               <div className="bg-white p-2 rounded border border-border font-mono">
-                <p className="font-bold text-brand">Admin Account</p>
-                <p>Phone: 08012345678</p>
-                <p>Pass: password</p>
+                <p className="font-bold text-brand">Super Admin</p>
+                <p className="truncate">admin@rydexmobility.com</p>
+              </div>
+              <div className="bg-white p-2 rounded border border-border font-mono">
+                <p className="font-bold text-brand">Ops Officer</p>
+                <p className="truncate">operations@rydexmobility.com</p>
+              </div>
+              <div className="bg-white p-2 rounded border border-border font-mono">
+                <p className="font-bold text-brand">Owner (CityView)</p>
+                <p className="truncate">cityview@rydexmobility.com</p>
               </div>
               <div className="bg-white p-2 rounded border border-border font-mono">
                 <p className="font-bold text-brand">Passenger</p>
-                <p>Phone: 08033333333</p>
-                <p>Pass: password</p>
+                <p className="truncate">passenger@rydexmobility.com</p>
               </div>
             </div>
           </div>

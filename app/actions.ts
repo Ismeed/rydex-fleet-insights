@@ -7,16 +7,20 @@ import { cookies } from "next/headers";
 
 export async function loginAction(prevState: any, formData: FormData) {
   try {
-    const phone = formData.get("phone") as string;
+    const identifier = formData.get("phone") as string;
     const password = formData.get("password") as string;
 
-    if (!phone || !password) {
-      return { success: false, error: "Please enter phone and password." };
+    if (!identifier || !password) {
+      return { success: false, error: "Please enter email/phone and password." };
     }
 
-    const user = await dbService.getUserByPhone(phone);
+    const user = await dbService.getUserByPhoneOrEmail(identifier);
     if (!user || user.password !== password) {
-      return { success: false, error: "Invalid phone number or password." };
+      return { success: false, error: "Invalid email/phone or password." };
+    }
+
+    if (user.status === "suspended") {
+      return { success: false, error: "Your account has been suspended. Please contact administration." };
     }
 
     // Set cookies for session persistence
@@ -226,8 +230,8 @@ export async function createVehicleAction(prevState: any, formData: FormData) {
       plateNumber: plateNumber.trim(),
       vehicleType: vehicleType || "Keke Napep",
       fuelType: fuelType || "CNG",
-      ownerId: ownerId || undefined,
-      assignedDriverId: assignedDriverId || undefined,
+      ownerId: ownerId || null,
+      assignedDriverId: assignedDriverId || null,
       status: status || "ACTIVE",
     });
 
@@ -259,8 +263,8 @@ export async function updateVehicleAction(prevState: any, formData: FormData) {
       plateNumber: plateNumber || undefined,
       vehicleType: vehicleType || undefined,
       fuelType: fuelType || undefined,
-      ownerId: ownerId === "none" ? undefined : ownerId || undefined,
-      assignedDriverId: assignedDriverId === "none" ? undefined : assignedDriverId || undefined,
+      ownerId: ownerId === "none" ? null : ownerId || null,
+      assignedDriverId: assignedDriverId === "none" ? null : assignedDriverId || null,
       status: status || undefined,
     });
 
@@ -362,5 +366,95 @@ export async function suspendDriverAction(id: string) {
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message || "Failed to suspend driver." };
+  }
+}
+
+export async function createOwnerAction(prevState: any, formData: FormData) {
+  try {
+    const name = formData.get("name") as string;
+    const phone = formData.get("phone") as string;
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+    const status = formData.get("status") as string;
+
+    if (!name || !phone || !password) {
+      return { success: false, error: "Owner Name, Phone, and Password are required." };
+    }
+
+    // Check if user already exists
+    const existing = await dbService.getUserByPhoneOrEmail(phone);
+    if (existing) {
+      return { success: false, error: "A user with this phone number or email already exists." };
+    }
+
+    await dbService.createUser({
+      name: name.trim(),
+      phone: phone.trim(),
+      email: email ? email.trim().toLowerCase() : undefined,
+      password: password,
+      role: "VEHICLE_OWNER",
+      status: status || "active",
+    });
+
+    revalidatePath("/owners");
+    revalidatePath("/");
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || "Failed to create owner." };
+  }
+}
+
+export async function updateOwnerAction(prevState: any, formData: FormData) {
+  try {
+    const id = formData.get("id") as string;
+    const name = formData.get("name") as string;
+    const phone = formData.get("phone") as string;
+    const email = formData.get("email") as string;
+    const status = formData.get("status") as string;
+
+    if (!id) {
+      return { success: false, error: "Owner ID is required." };
+    }
+
+    await dbService.updateUser(id, {
+      name: name || undefined,
+      phone: phone || undefined,
+      email: email || undefined,
+      status: status || undefined,
+    });
+
+    revalidatePath("/owners");
+    revalidatePath("/");
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || "Failed to update owner." };
+  }
+}
+
+export async function suspendOwnerAction(id: string) {
+  try {
+    if (!id) {
+      return { success: false, error: "Owner ID is required." };
+    }
+    await dbService.suspendUser(id);
+    revalidatePath("/owners");
+    revalidatePath("/");
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || "Failed to suspend owner." };
+  }
+}
+
+export async function unsuspendOwnerAction(id: string) {
+  try {
+    if (!id) {
+      return { success: false, error: "Owner ID is required." };
+    }
+    await dbService.unsuspendUser(id);
+    revalidatePath("/owners");
+    revalidatePath("/");
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || "Failed to unsuspend owner." };
   }
 }

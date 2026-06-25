@@ -17,6 +17,7 @@ import {
   LogOut,
   Menu,
   X,
+  Building,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +25,7 @@ const PRIMARY_NAV = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/vehicles", label: "Vehicles", icon: Car },
   { href: "/drivers", label: "Drivers", icon: Users },
+  { href: "/owners", label: "Owners", icon: Building },
   { href: "/shifts", label: "Shifts", icon: ClipboardList },
   { href: "/revenue", label: "Revenue", icon: TrendingUp },
 ] as const;

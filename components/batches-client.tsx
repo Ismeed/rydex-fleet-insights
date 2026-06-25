@@ -46,10 +46,17 @@ export function BatchesClient({
 
   const handlePrint = (codes: any[]) => {
     if (!codes || codes.length === 0) {
-      toast.error("No codes found in this batch to print.");
+      alert("No reward codes available for printing.");
       return;
     }
-    const codeStrings = codes.map(c => c.code);
+    // Verify that actual valid codes exist in the batch
+    const validCodes = codes.filter(c => c.code && c.code !== "RYD-XXXXXX");
+    if (validCodes.length === 0) {
+      alert("No reward codes available for printing.");
+      return;
+    }
+
+    const codeStrings = validCodes.map(c => c.code);
     setPrintingCodes(codeStrings);
     setTimeout(() => {
       window.print();
