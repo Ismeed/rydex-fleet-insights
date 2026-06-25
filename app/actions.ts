@@ -1,6 +1,7 @@
 "use server";
 
 import { dbService } from "@/lib/db-service";
+import { emailService } from "@/lib/email-service";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 
@@ -183,7 +184,16 @@ export async function deliverRewardAction(redemptionId: string) {
       return { success: false, error: "Redemption ID is required." };
     }
 
-    await dbService.deliverReward(redemptionId);
+    const updated = await dbService.deliverReward(redemptionId);
+    
+    if (updated && updated.passenger) {
+      const p = updated.passenger;
+      const cleanEmailName = p.name.toLowerCase().replace(/[^a-z0-9]/g, "");
+      const derivedEmail = `${cleanEmailName}@example.com`;
+      // Dispatch branded email asynchronously
+      emailService.sendDeliveryEmail(p.name, derivedEmail, updated.rewardRequested)
+        .catch(err => console.error("Async email dispatch failed:", err));
+    }
 
     revalidatePath("/rewards");
     revalidatePath("/");
@@ -192,5 +202,165 @@ export async function deliverRewardAction(redemptionId: string) {
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message || "Failed to approve reward." };
+  }
+}
+
+export async function createVehicleAction(prevState: any, formData: FormData) {
+  try {
+    const id = formData.get("id") as string;
+    const vehicleNumber = formData.get("vehicleNumber") as string;
+    const plateNumber = formData.get("plateNumber") as string;
+    const vehicleType = formData.get("vehicleType") as string;
+    const fuelType = formData.get("fuelType") as string;
+    const ownerId = formData.get("ownerId") as string;
+    const assignedDriverId = formData.get("assignedDriverId") as string;
+    const status = formData.get("status") as string;
+
+    if (!id || !vehicleNumber || !plateNumber) {
+      return { success: false, error: "Vehicle ID, Number, and Plate Number are required." };
+    }
+
+    await dbService.createVehicle({
+      id: id.toLowerCase().trim(),
+      vehicleNumber: vehicleNumber.trim(),
+      plateNumber: plateNumber.trim(),
+      vehicleType: vehicleType || "Keke Napep",
+      fuelType: fuelType || "CNG",
+      ownerId: ownerId || undefined,
+      assignedDriverId: assignedDriverId || undefined,
+      status: status || "ACTIVE",
+    });
+
+    revalidatePath("/vehicles");
+    revalidatePath("/");
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || "Failed to create vehicle." };
+  }
+}
+
+export async function updateVehicleAction(prevState: any, formData: FormData) {
+  try {
+    const id = formData.get("id") as string;
+    const vehicleNumber = formData.get("vehicleNumber") as string;
+    const plateNumber = formData.get("plateNumber") as string;
+    const vehicleType = formData.get("vehicleType") as string;
+    const fuelType = formData.get("fuelType") as string;
+    const ownerId = formData.get("ownerId") as string;
+    const assignedDriverId = formData.get("assignedDriverId") as string;
+    const status = formData.get("status") as string;
+
+    if (!id) {
+      return { success: false, error: "Vehicle ID is required." };
+    }
+
+    await dbService.updateVehicle(id, {
+      vehicleNumber: vehicleNumber || undefined,
+      plateNumber: plateNumber || undefined,
+      vehicleType: vehicleType || undefined,
+      fuelType: fuelType || undefined,
+      ownerId: ownerId === "none" ? undefined : ownerId || undefined,
+      assignedDriverId: assignedDriverId === "none" ? undefined : assignedDriverId || undefined,
+      status: status || undefined,
+    });
+
+    revalidatePath("/vehicles");
+    revalidatePath(`/vehicles/${id}`);
+    revalidatePath("/");
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || "Failed to update vehicle." };
+  }
+}
+
+export async function disableVehicleAction(id: string) {
+  try {
+    if (!id) {
+      return { success: false, error: "Vehicle ID is required." };
+    }
+    await dbService.disableVehicle(id);
+    revalidatePath("/vehicles");
+    revalidatePath(`/vehicles/${id}`);
+    revalidatePath("/");
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || "Failed to disable vehicle." };
+  }
+}
+
+export async function createDriverAction(prevState: any, formData: FormData) {
+  try {
+    const name = formData.get("name") as string;
+    const phone = formData.get("phone") as string;
+    const address = formData.get("address") as string;
+    const guarantorName = formData.get("guarantorName") as string;
+    const guarantorPhone = formData.get("guarantorPhone") as string;
+    const status = formData.get("status") as string;
+
+    if (!name || !phone) {
+      return { success: false, error: "Driver Name and Phone are required." };
+    }
+
+    await dbService.createDriver({
+      name: name.trim(),
+      phone: phone.trim(),
+      address: address || "",
+      guarantorName: guarantorName || "",
+      guarantorPhone: guarantorPhone || "",
+      status: status || "active",
+    });
+
+    revalidatePath("/drivers");
+    revalidatePath("/");
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || "Failed to create driver." };
+  }
+}
+
+export async function updateDriverAction(prevState: any, formData: FormData) {
+  try {
+    const id = formData.get("id") as string;
+    const name = formData.get("name") as string;
+    const phone = formData.get("phone") as string;
+    const address = formData.get("address") as string;
+    const guarantorName = formData.get("guarantorName") as string;
+    const guarantorPhone = formData.get("guarantorPhone") as string;
+    const status = formData.get("status") as string;
+
+    if (!id) {
+      return { success: false, error: "Driver ID is required." };
+    }
+
+    await dbService.updateDriver(id, {
+      name: name || undefined,
+      phone: phone || undefined,
+      address: address || undefined,
+      guarantorName: guarantorName || undefined,
+      guarantorPhone: guarantorPhone || undefined,
+      status: status || undefined,
+    });
+
+    revalidatePath("/drivers");
+    revalidatePath(`/drivers/${id}`);
+    revalidatePath("/");
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || "Failed to update driver." };
+  }
+}
+
+export async function suspendDriverAction(id: string) {
+  try {
+    if (!id) {
+      return { success: false, error: "Driver ID is required." };
+    }
+    await dbService.suspendDriver(id);
+    revalidatePath("/drivers");
+    revalidatePath(`/drivers/${id}`);
+    revalidatePath("/");
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || "Failed to suspend driver." };
   }
 }

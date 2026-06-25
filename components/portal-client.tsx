@@ -1,10 +1,10 @@
 "use client";
 
-import { useActionState, useTransition, useState } from "react";
+import { useTransition, useState } from "react";
 import { redeemCodeAction, requestRedemptionAction } from "@/app/actions";
 import { AppShell } from "@/components/app-shell";
 import { toast } from "sonner";
-import { Gift, QrCode, Sparkles, Send } from "lucide-react";
+import { Gift, QrCode, Sparkles, Send, CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface PortalClientProps {
@@ -12,12 +12,19 @@ interface PortalClientProps {
   redemptions: any[];
 }
 
+interface ValidationFeedback {
+  type: "success" | "warning" | "error";
+  message: string;
+}
+
 export function PortalClient({ user, redemptions: initialRedemptions }: PortalClientProps) {
   const [points, setPoints] = useState(user.points || 0);
   const [redemptions, setRedemptions] = useState(initialRedemptions);
   const [isPending, startTransition] = useTransition();
+  const [codeInputValue, setCodeInputValue] = useState("");
+  const [feedback, setFeedback] = useState<ValidationFeedback | null>(null);
 
-  // Progress Bar values
+  // Progress Bar thresholds
   const getNextGoal = (pts: number) => {
     if (pts < 100) return { goal: 100, diff: 100 - pts, text: "100MB Data or ₦100 Airtime" };
     if (pts < 300) return { goal: 300, diff: 300 - pts, text: "500MB Data" };
@@ -28,15 +35,34 @@ export function PortalClient({ user, redemptions: initialRedemptions }: PortalCl
   const currentGoal = getNextGoal(points);
   const percentComplete = Math.min(100, Math.round((points / currentGoal.goal) * 100));
 
-  const handleRedeemCode = async (formData: FormData) => {
-    const code = formData.get("code") as string;
+  const handleRedeemCodeSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!codeInputValue.trim()) return;
+
+    setFeedback(null);
     startTransition(async () => {
-      const res = await redeemCodeAction(code, user.id);
+      const res = await redeemCodeAction(codeInputValue, user.id);
       if (res.success) {
-        toast.success("Commute code verified! +10 Points earned.");
+        setFeedback({
+          type: "success",
+          message: "✓ Code Accepted: 10 Points Added Successfully",
+        });
         setPoints((p) => p + 10);
+        setCodeInputValue("");
+        toast.success("Points added successfully!");
       } else {
-        toast.error(res.error || "Failed to redeem code");
+        const errorText = res.error || "";
+        if (errorText.toLowerCase().includes("already") || errorText.toLowerCase().includes("used")) {
+          setFeedback({
+            type: "warning",
+            message: "⚠ This code has already been used.",
+          });
+        } else {
+          setFeedback({
+            type: "error",
+            message: "✗ Invalid reward code. Please check the code and try again.",
+          });
+        }
       }
     });
   };
@@ -51,7 +77,6 @@ export function PortalClient({ user, redemptions: initialRedemptions }: PortalCl
       if (res.success) {
         toast.success(`Request for ${reward} submitted for approval!`);
         setPoints((p) => p - ptsCost);
-        // Add to local redemptions history list
         setRedemptions((prev) => [
           {
             id: `r-${Date.now()}`,
@@ -92,7 +117,7 @@ export function PortalClient({ user, redemptions: initialRedemptions }: PortalCl
 
             {/* Gamified progress bar */}
             <div className="space-y-2">
-              <div className="flex justify-between text-xs font-semibold">
+              <div className="flex justify-between text-xs font-semibold flex-wrap gap-1">
                 <span className="text-muted-foreground">{points} / {currentGoal.goal} pts</span>
                 {currentGoal.diff > 0 ? (
                   <span className="text-brand font-medium">
@@ -111,24 +136,26 @@ export function PortalClient({ user, redemptions: initialRedemptions }: PortalCl
             </div>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-6 border-t border-border mt-4">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-6 border-t border-border mt-6">
             {REWARDS.map((r) => (
               <button
                 key={r.label}
                 onClick={() => handleRewardRedeem(r.label, r.cost)}
                 disabled={points < r.cost || isPending}
                 className={cn(
-                  "p-3 rounded-lg border text-center transition-all flex flex-col justify-between items-center group cursor-pointer",
+                  "p-4 rounded-xl border text-center transition-all flex flex-col justify-between items-center group cursor-pointer h-28 box-border",
                   points >= r.cost
-                    ? "border-brand/30 bg-brand-soft/20 hover:bg-brand/5"
-                    : "border-border bg-surface opacity-50 cursor-not-allowed"
+                    ? "border-brand/20 bg-brand-soft/10 hover:bg-brand/5 hover:border-brand/40"
+                    : "border-border bg-surface/50 opacity-40 cursor-not-allowed"
                 )}
               >
                 <Gift className={cn("size-5 mb-2 transition-transform group-hover:scale-110", points >= r.cost ? "text-brand" : "text-muted-foreground")} />
-                <p className="text-xs font-bold text-foreground">{r.label}</p>
-                <p className="text-[10px] text-muted-foreground font-mono mt-1 font-semibold">
-                  {r.cost} pts
-                </p>
+                <div>
+                  <p className="text-xs font-bold text-foreground truncate max-w-full">{r.label}</p>
+                  <p className="text-[10px] text-muted-foreground font-mono mt-1 font-semibold">
+                    {r.cost} pts
+                  </p>
+                </div>
               </button>
             ))}
           </div>
@@ -136,32 +163,58 @@ export function PortalClient({ user, redemptions: initialRedemptions }: PortalCl
 
         {/* Enter Code Box */}
         <div className="bg-white border border-border rounded-xl shadow-sm p-5 sm:p-6 flex flex-col justify-between">
-          <div>
-            <h3 className="font-bold text-base mb-1 flex items-center gap-1.5">
-              <QrCode className="size-5 text-brand" /> Enter Commute Code
-            </h3>
-            <p className="text-xs text-muted-foreground mb-5">
-              Enter the unique code printed on your Rydex receipt/ticket to earn 10 points
-            </p>
+          <div className="space-y-4">
+            <div>
+              <h3 className="font-bold text-base mb-1 flex items-center gap-1.5">
+                <QrCode className="size-5 text-brand" /> Enter Commute Code
+              </h3>
+              <p className="text-xs text-muted-foreground">
+                Enter the unique code printed on your Rydex receipt/ticket to earn 10 points
+              </p>
+            </div>
 
-            <form action={handleRedeemCode} className="space-y-4">
+            <form onSubmit={handleRedeemCodeSubmit} className="space-y-4">
+              {feedback && (
+                <div
+                  className={cn(
+                    "p-3 rounded-lg border text-xs font-semibold flex items-start gap-2 animate-fade-up",
+                    feedback.type === "success"
+                      ? "bg-brand/10 border-brand/20 text-brand"
+                      : feedback.type === "warning"
+                      ? "bg-warn-soft border-warn/25 text-warn"
+                      : "bg-danger-soft border-danger/25 text-danger"
+                  )}
+                >
+                  {feedback.type === "success" ? (
+                    <CheckCircle2 className="size-4 shrink-0 mt-0.5" />
+                  ) : feedback.type === "warning" ? (
+                    <AlertTriangle className="size-4 shrink-0 mt-0.5" />
+                  ) : (
+                    <XCircle className="size-4 shrink-0 mt-0.5" />
+                  )}
+                  <span>{feedback.message}</span>
+                </div>
+              )}
+
               <div className="space-y-1">
                 <label htmlFor="code" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                   Receipt Code
                 </label>
                 <input
                   id="code"
-                  name="code"
                   type="text"
+                  value={codeInputValue}
+                  onChange={(e) => setCodeInputValue(e.target.value)}
                   placeholder="e.g. RYD-7K4P9M"
                   required
+                  disabled={isPending}
                   className="w-full px-3 py-2 bg-surface border border-border rounded-md text-sm font-mono focus:ring-1 focus:ring-brand outline-none uppercase"
                 />
               </div>
               <button
                 type="submit"
-                disabled={isPending}
-                className="w-full bg-brand text-brand-foreground py-2.5 rounded-md text-sm font-bold hover:bg-brand/90 transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
+                disabled={isPending || !codeInputValue.trim()}
+                className="w-full bg-brand text-brand-foreground py-2.5 rounded-md text-sm font-bold hover:bg-brand/90 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
               >
                 <Send className="size-4" /> Earn Points
               </button>
@@ -208,7 +261,7 @@ export function PortalClient({ user, redemptions: initialRedemptions }: PortalCl
                             : "bg-brand/10 text-brand"
                         )}
                       >
-                        {r.status === "PENDING_APPROVAL" ? "Pending Approval" : "Reward Delivered"}
+                        {r.status === "PENDING_APPROVAL" ? "Pending" : "Delivered"}
                       </span>
                     </td>
                   </tr>

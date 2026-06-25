@@ -56,6 +56,7 @@ const getInitialData = (): FallbackData => {
     plateNumber: `KAT-${100 + i}-XA`,
     status: i === 7 ? "MAINTENANCE" : i === 9 ? "OFFLINE" : "ACTIVE",
     assignedDriverId: i < 8 ? `drv-${i + 1}` : null,
+    ownerId: i < 2 ? "u-owner1" : null, // Alhaji Musa owns vehicles KT-001 and KT-002
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   }));
@@ -65,7 +66,7 @@ const getInitialData = (): FallbackData => {
       id: "u-admin",
       name: "Aminu Okafor",
       phone: "08012345678",
-      password: "password", // plain for demo simplicity, in Prisma we use hashing
+      password: "password",
       role: "SUPER_ADMIN",
       points: 0,
       createdAt: new Date().toISOString(),
@@ -88,6 +89,16 @@ const getInitialData = (): FallbackData => {
       password: "password",
       role: "PASSENGER",
       points: 120,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    {
+      id: "u-owner1",
+      name: "Alhaji Musa",
+      phone: "08044444444",
+      password: "password",
+      role: "VEHICLE_OWNER",
+      points: 0,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     },
@@ -252,17 +263,24 @@ export const dbService = {
   },
 
   // Vehicles
-  async getVehicles() {
+  async getVehicles(ownerId?: string) {
     if (isPrismaEnabled()) {
+      const whereClause = ownerId ? { ownerId } : {};
       return await prisma.vehicle.findMany({
-        include: { assignedDriver: true },
+        where: whereClause,
+        include: { assignedDriver: true, owner: true },
         orderBy: { vehicleNumber: "asc" },
       });
     }
     const store = loadFallbackData();
-    return store.vehicles.map((v) => ({
+    let list = store.vehicles;
+    if (ownerId) {
+      list = list.filter((v) => v.ownerId === ownerId);
+    }
+    return list.map((v) => ({
       ...v,
       assignedDriver: store.drivers.find((d) => d.id === v.assignedDriverId) || null,
+      owner: store.users.find((u) => u.id === v.ownerId) || null,
     }));
   },
 
@@ -270,7 +288,7 @@ export const dbService = {
     if (isPrismaEnabled()) {
       return await prisma.vehicle.findUnique({
         where: { id },
-        include: { assignedDriver: true, shifts: { orderBy: { startTime: "desc" } } },
+        include: { assignedDriver: true, owner: true, shifts: { orderBy: { startTime: "desc" } } },
       });
     }
     const store = loadFallbackData();
@@ -279,8 +297,86 @@ export const dbService = {
     return {
       ...vehicle,
       assignedDriver: store.drivers.find((d) => d.id === vehicle.assignedDriverId) || null,
+      owner: store.users.find((u) => u.id === vehicle.ownerId) || null,
       shifts: store.shifts.filter((s) => s.vehicleId === id).sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime()),
     };
+  },
+
+  async createVehicle(data: {
+    id: string;
+    vehicleNumber: string;
+    plateNumber: string;
+    vehicleType: string;
+    fuelType: string;
+    ownerId?: string;
+    assignedDriverId?: string;
+    status?: string;
+  }) {
+    if (isPrismaEnabled()) {
+      return await prisma.vehicle.create({
+        data: {
+          id: data.id,
+          vehicleNumber: data.vehicleNumber,
+          plateNumber: data.plateNumber,
+          vehicleType: data.vehicleType,
+          fuelType: data.fuelType,
+          ownerId: data.ownerId || null,
+          assignedDriverId: data.assignedDriverId || null,
+          status: (data.status || "ACTIVE") as any,
+        },
+      });
+    }
+    const store = loadFallbackData();
+    const newVehicle = {
+      id: data.id.toLowerCase(),
+      vehicleNumber: data.vehicleNumber,
+      plateNumber: data.plateNumber,
+      vehicleType: data.vehicleType,
+      fuelType: data.fuelType,
+      ownerId: data.ownerId || null,
+      assignedDriverId: data.assignedDriverId || null,
+      status: data.status || "ACTIVE",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    store.vehicles.push(newVehicle);
+    saveFallbackData(store);
+    return newVehicle;
+  },
+
+  async updateVehicle(id: string, data: {
+    vehicleNumber?: string;
+    plateNumber?: string;
+    vehicleType?: string;
+    fuelType?: string;
+    ownerId?: string;
+    assignedDriverId?: string;
+    status?: string;
+  }) {
+    if (isPrismaEnabled()) {
+      return await prisma.vehicle.update({
+        where: { id },
+        data: {
+          ...data,
+          status: data.status as any,
+        },
+      });
+    }
+    const store = loadFallbackData();
+    const index = store.vehicles.findIndex((v) => v.id === id);
+    if (index === -1) throw new Error("Vehicle not found");
+    const updated = {
+      ...store.vehicles[index],
+      ...data,
+      updatedAt: new Date().toISOString(),
+    };
+    store.vehicles[index] = updated;
+    saveFallbackData(store);
+    return updated;
+  },
+
+  async disableVehicle(id: string) {
+    return await this.updateVehicle(id, { status: "OFFLINE" });
   },
 
   // Drivers
@@ -315,6 +411,72 @@ export const dbService = {
     };
   },
 
+  async createDriver(data: {
+    name: string;
+    phone: string;
+    address: string;
+    guarantorName: string;
+    guarantorPhone: string;
+    status?: string;
+  }) {
+    if (isPrismaEnabled()) {
+      return await prisma.driver.create({
+        data: {
+          ...data,
+          status: data.status || "active",
+        },
+      });
+    }
+    const store = loadFallbackData();
+    const newDriver = {
+      id: `drv-${Date.now()}`,
+      name: data.name,
+      phone: data.phone,
+      address: data.address,
+      guarantorName: data.guarantorName,
+      guarantorPhone: data.guarantorPhone,
+      status: data.status || "active",
+      avgPerDay: 8500,
+      avgPerHour: 1000,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    store.drivers.push(newDriver);
+    saveFallbackData(store);
+    return newDriver;
+  },
+
+  async updateDriver(id: string, data: {
+    name?: string;
+    phone?: string;
+    address?: string;
+    guarantorName?: string;
+    guarantorPhone?: string;
+    status?: string;
+  }) {
+    if (isPrismaEnabled()) {
+      return await prisma.driver.update({
+        where: { id },
+        data,
+      });
+    }
+    const store = loadFallbackData();
+    const index = store.drivers.findIndex((d) => d.id === id);
+    if (index === -1) throw new Error("Driver not found");
+    const updated = {
+      ...store.drivers[index],
+      ...data,
+      updatedAt: new Date().toISOString(),
+    };
+    store.drivers[index] = updated;
+    saveFallbackData(store);
+    return updated;
+  },
+
+  async suspendDriver(id: string) {
+    return await this.updateDriver(id, { status: "suspended" });
+  },
+
   // Shifts
   async getActiveShifts() {
     if (isPrismaEnabled()) {
@@ -333,15 +495,22 @@ export const dbService = {
     }));
   },
 
-  async getShiftsHistory() {
+  async getShiftsHistory(ownerId?: string) {
     if (isPrismaEnabled()) {
+      const filter = ownerId ? { vehicle: { ownerId } } : {};
       return await prisma.shift.findMany({
+        where: filter,
         include: { vehicle: true, driver: true },
         orderBy: { startTime: "desc" },
       });
     }
     const store = loadFallbackData();
-    return store.shifts.map((s) => ({
+    let list = store.shifts;
+    if (ownerId) {
+      const ownedIds = store.vehicles.filter((v) => v.ownerId === ownerId).map((v) => v.id);
+      list = list.filter((s) => ownedIds.includes(s.vehicleId));
+    }
+    return list.map((s) => ({
       ...s,
       vehicle: store.vehicles.find((v) => v.id === s.vehicleId) || null,
       driver: store.drivers.find((d) => d.id === s.driverId) || null,
@@ -396,7 +565,6 @@ export const dbService = {
       const revPerHour = revenue / hours;
       const revPerKm = revenue / distance;
       
-      // Flags low performance anomaly: if revenue is less than 5000 and fleet average is usually higher, or just flag if performance is extremely low compared to hours
       let status: any = "ENDED";
       if (revenue < 5000 && hours > 4) {
         status = "FLAGGED";
@@ -474,9 +642,8 @@ export const dbService = {
     const batchNumber = `BAT-${String(Date.now()).slice(-6)}`;
     const dateGenerated = new Date();
 
-    // Helper to generate a random unique single-use code: RYD-[6 characters alphanumeric]
     const generateCode = () => {
-      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // No easy-to-confuse characters (like O, 0, I, 1)
+      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
       let result = "";
       for (let i = 0; i < 6; i++) {
         result += chars.charAt(Math.floor(Math.random() * chars.length));
@@ -553,7 +720,6 @@ export const dbService = {
       if (!code) throw new Error("Invalid reward code");
       if (code.status !== "UNUSED") throw new Error("Code has already been redeemed or expired");
 
-      // Update code
       await prisma.rewardCode.update({
         where: { id: code.id },
         data: {
@@ -563,7 +729,6 @@ export const dbService = {
         },
       });
 
-      // Update user points
       const user = await prisma.user.findUnique({ where: { id: passengerId } });
       if (user) {
         await prisma.user.update({
@@ -614,7 +779,6 @@ export const dbService = {
       const user = await prisma.user.findUnique({ where: { id: passengerId } });
       if (!user || user.points < pointsUsed) throw new Error("Insufficient points");
 
-      // Deduct points
       await prisma.user.update({
         where: { id: passengerId },
         data: { points: user.points - pointsUsed },
@@ -655,6 +819,7 @@ export const dbService = {
     if (isPrismaEnabled()) {
       return await prisma.redemptionRequest.update({
         where: { id },
+        include: { passenger: true },
         data: {
           status: "DELIVERED",
           processedAt: new Date(),
@@ -663,12 +828,18 @@ export const dbService = {
     }
 
     const store = loadFallbackData();
-    const request = store.redemptions.find((r) => r.id === id);
-    if (request) {
+    const requestIndex = store.redemptions.findIndex((r) => r.id === id);
+    if (requestIndex !== -1) {
+      const request = store.redemptions[requestIndex];
       request.status = "DELIVERED";
       request.processedAt = new Date().toISOString();
       saveFallbackData(store);
+      
+      return {
+        ...request,
+        passenger: store.users.find((u) => u.id === request.passengerId) || null,
+      };
     }
-    return request;
+    return null;
   },
 };

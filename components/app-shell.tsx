@@ -35,6 +35,12 @@ const LOYALTY_NAV = [
   { href: "/reports", label: "Reports", icon: FileText },
 ] as const;
 
+const OWNER_NAV = [
+  { href: "/owner", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/vehicles", label: "Vehicles", icon: Car },
+  { href: "/reports", label: "Reports", icon: FileText },
+] as const;
+
 export function AppShell({
   title,
   description,
@@ -60,7 +66,7 @@ export function AppShell({
   };
 
   const handleSignOut = () => {
-    // Clear auth cookie and redirect
+    // Clear auth cookies and redirect
     document.cookie = "rydex-role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
     document.cookie = "rydex-phone=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
     document.cookie = "rydex-name=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
@@ -69,6 +75,8 @@ export function AppShell({
   };
 
   const isPassenger = user?.role === "PASSENGER";
+  const isOwner = user?.role === "VEHICLE_OWNER";
+  const isStaff = user?.role === "SUPER_ADMIN" || user?.role === "OPERATIONS_OFFICER";
 
   return (
     <div className="flex min-h-screen bg-surface text-foreground font-sans">
@@ -85,7 +93,7 @@ export function AppShell({
         </div>
 
         <nav className="flex-1 px-4 space-y-1 mt-2 overflow-y-auto">
-          {!isPassenger ? (
+          {isStaff && (
             <>
               {PRIMARY_NAV.map((item) => (
                 <Link
@@ -122,8 +130,36 @@ export function AppShell({
                 </Link>
               ))}
             </>
-          ) : (
+          )}
+
+          {isOwner && (
             <>
+              <div className="pt-2 pb-2 px-3 text-[10px] font-bold text-white/30 uppercase tracking-widest">
+                Investor Menu
+              </div>
+              {OWNER_NAV.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                    isActive(item.href)
+                      ? "bg-white/10 text-white"
+                      : "text-white/60 hover:text-white hover:bg-white/5"
+                  )}
+                >
+                  <item.icon className="size-4 shrink-0" strokeWidth={2} />
+                  <span className="truncate">{item.label}</span>
+                </Link>
+              ))}
+            </>
+          )}
+
+          {isPassenger && (
+            <>
+              <div className="pt-2 pb-2 px-3 text-[10px] font-bold text-white/30 uppercase tracking-widest">
+                Commuter Menu
+              </div>
               <Link
                 href="/portal"
                 className={cn(
@@ -147,13 +183,15 @@ export function AppShell({
             </div>
             <div className="flex flex-col min-w-0">
               <span className="text-sm font-medium leading-tight truncate text-white">
-                {user?.name || "Rydex Operator"}
+                {user?.name || "Rydex User"}
               </span>
-              <span className="text-[10px] text-white/40 truncate">
+              <span className="text-[10px] text-white/45 truncate">
                 {user?.role === "SUPER_ADMIN"
                   ? "Super Admin"
                   : user?.role === "OPERATIONS_OFFICER"
-                  ? "Operations Officer"
+                  ? "Ops Officer"
+                  : user?.role === "VEHICLE_OWNER"
+                  ? "Vehicle Owner"
                   : "Passenger"}
               </span>
             </div>
@@ -169,7 +207,7 @@ export function AppShell({
       </aside>
 
       {/* Mobile Header */}
-      <header className="lg:hidden w-full h-16 bg-sidebar text-sidebar-foreground flex items-center justify-between px-4 fixed top-0 left-0 right-0 z-30 border-b border-sidebar-border">
+      <header className="lg:hidden w-full h-16 bg-sidebar text-sidebar-foreground flex items-center justify-between px-4 fixed top-0 left-0 right-0 z-35 border-b border-sidebar-border">
         <div className="flex items-center gap-2">
           <div className="size-8 bg-brand rounded grid place-items-center font-bold text-base text-brand-foreground">
             R
@@ -186,9 +224,9 @@ export function AppShell({
 
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className="lg:hidden fixed inset-0 top-16 bg-sidebar text-sidebar-foreground z-20 flex flex-col p-4 space-y-4">
+        <div className="lg:hidden fixed inset-0 top-16 bg-sidebar text-sidebar-foreground z-30 flex flex-col p-4 space-y-4">
           <nav className="flex-1 space-y-1">
-            {!isPassenger ? (
+            {isStaff && (
               <>
                 {PRIMARY_NAV.map((item) => (
                   <Link
@@ -226,7 +264,30 @@ export function AppShell({
                   </Link>
                 ))}
               </>
-            ) : (
+            )}
+
+            {isOwner && (
+              <>
+                {OWNER_NAV.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-2.5 rounded-md text-base font-medium transition-colors",
+                      isActive(item.href)
+                        ? "bg-white/10 text-white"
+                        : "text-white/60 hover:text-white"
+                    )}
+                  >
+                    <item.icon className="size-5 shrink-0" />
+                    <span>{item.label}</span>
+                  </Link>
+                ))}
+              </>
+            )}
+
+            {isPassenger && (
               <Link
                 href="/portal"
                 onClick={() => setMobileMenuOpen(false)}
@@ -247,7 +308,7 @@ export function AppShell({
               </div>
               <div className="flex flex-col min-w-0">
                 <span className="text-sm font-medium leading-tight truncate text-white">
-                  {user?.name || "Rydex Operator"}
+                  {user?.name || "Rydex User"}
                 </span>
                 <span className="text-[10px] text-white/40 truncate">
                   {user?.role === "SUPER_ADMIN" ? "Super Admin" : "Operations Officer"}
@@ -267,7 +328,7 @@ export function AppShell({
 
       {/* Main Layout Container */}
       <div className="flex-1 flex flex-col lg:pl-64 min-w-0">
-        <header className="hidden lg:flex h-16 border-b border-border bg-white items-center justify-between px-8 sticky top-0 z-10">
+        <header className="hidden lg:flex h-16 border-b border-border bg-white items-center justify-between px-8 sticky top-0 z-15">
           <div className="flex items-center gap-3 min-w-0">
             <div className="px-3 py-1 bg-surface border border-border rounded-md text-xs font-medium flex items-center gap-2 shrink-0">
               <span className="size-2 bg-brand-accent rounded-full animate-pulse" />
@@ -289,25 +350,26 @@ export function AppShell({
               })}{" "}
               WAT
             </span>
-            {actions ?? (
+            {/* Start Shift dispatch should ONLY render for staff (Admins/Officers) */}
+            {isStaff && (actions ?? (
               <Link
                 href="/shifts"
                 className="inline-flex items-center gap-1.5 px-4 py-2 bg-brand text-brand-foreground text-sm font-semibold rounded-md hover:bg-brand/90 transition-colors"
               >
                 <Plus className="size-4" /> Start Shift
               </Link>
-            )}
+            ))}
           </div>
         </header>
 
-        {/* Mobile Page Header (spanned spacing) */}
+        {/* Mobile Page Header padding clearing mobile header */}
         <div className="lg:hidden px-4 pt-20 pb-2">
           <h1 className="text-xl font-bold tracking-tight">{title}</h1>
           {description && <p className="text-xs text-muted-foreground mt-0.5">{description}</p>}
         </div>
 
-        {/* Page Content */}
-        <main className="flex-1 p-4 lg:p-8 space-y-6 lg:space-y-8 overflow-y-auto">{children}</main>
+        {/* Page Content wrapper */}
+        <main className="flex-1 p-4 lg:p-8 space-y-6 lg:space-y-8 overflow-y-auto print:p-0 print:m-0">{children}</main>
       </div>
     </div>
   );

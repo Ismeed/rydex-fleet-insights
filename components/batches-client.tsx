@@ -1,11 +1,12 @@
 "use client";
 
-import { useActionState, useTransition } from "react";
+import { useActionState, useTransition, useState } from "react";
 import { generateBatchAction } from "@/app/actions";
 import { AppShell } from "@/components/app-shell";
 import { KpiCard } from "@/components/kpi-card";
 import { toast } from "sonner";
-import { QrCode, Plus } from "lucide-react";
+import { QrCode, Plus, Printer } from "lucide-react";
+import { PrintableSlips } from "@/components/printable-slips";
 
 interface BatchesClientProps {
   user: { name: string; role: string };
@@ -28,6 +29,7 @@ export function BatchesClient({
   kpis,
 }: BatchesClientProps) {
   const [isPending, startTransition] = useTransition();
+  const [printingCodes, setPrintingCodes] = useState<string[] | null>(null);
 
   const [state, formAction] = useActionState(
     async (prevState: any, formData: FormData) => {
@@ -42,12 +44,27 @@ export function BatchesClient({
     null
   );
 
+  const handlePrint = (codes: any[]) => {
+    if (!codes || codes.length === 0) {
+      toast.error("No codes found in this batch to print.");
+      return;
+    }
+    const codeStrings = codes.map(c => c.code);
+    setPrintingCodes(codeStrings);
+    setTimeout(() => {
+      window.print();
+      setPrintingCodes(null);
+    }, 300);
+  };
+
   return (
     <AppShell
       title="Reward Code Batches"
       description="Generate non-sequential, single-use codes for passenger distribution"
       user={user}
     >
+      {printingCodes && <PrintableSlips codes={printingCodes} />}
+
       <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <KpiCard label="Codes Generated" value={kpis.generated.toLocaleString()} />
         <KpiCard label="Codes Assigned" value={kpis.assigned.toLocaleString()} delayMs={60} />
@@ -76,6 +93,7 @@ export function BatchesClient({
                   <th className="px-4 py-2">Driver</th>
                   <th className="px-4 py-2">Size</th>
                   <th className="px-4 py-2 text-right">Redemption</th>
+                  <th className="px-4 py-2 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -91,6 +109,14 @@ export function BatchesClient({
                         <td className="px-4 py-3 font-mono">{b.codeCount} codes</td>
                         <td className="px-4 py-3 text-right font-mono font-bold">
                           {redeemedCount} / {b.codeCount} ({percent}%)
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <button
+                            onClick={() => handlePrint(b.codes)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold bg-brand/10 hover:bg-brand text-brand hover:text-white rounded transition-colors active:scale-95"
+                          >
+                            <Printer className="size-3" /> Print Slips
+                          </button>
                         </td>
                       </tr>
                     );

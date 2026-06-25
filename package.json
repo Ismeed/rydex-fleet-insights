@@ -56,7 +56,8 @@
     "sonner": "^1.5.0",
     "tailwind-merge": "^2.3.0",
     "vaul": "^0.9.1",
-    "zod": "^3.23.8"
+    "zod": "^3.23.8",
+    "nodemailer": "^6.9.13"
   },
   "devDependencies": {
     "@types/node": "^20.14.2",
@@ -66,6 +67,7 @@
     "prisma": "^5.14.0",
     "tailwindcss": "^4.0.0-alpha.16",
     "@tailwindcss/postcss": "^4.0.0-alpha.16",
-    "typescript": "^5.4.5"
+    "typescript": "^5.4.5",
+    "@types/nodemailer": "^6.4.14"
   }
 }
