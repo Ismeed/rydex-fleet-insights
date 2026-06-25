@@ -1,0 +1,18 @@
+{
+  "name": "Rydex Mobility Operations System",
+  "short_name": "Rydex",
+  "description": "Transport Fleet Operations & Passenger Loyalty Management Platform for CityView Katsina.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#111827",
+  "theme_color": "#0F8A5F",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
