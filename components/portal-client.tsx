@@ -104,7 +104,7 @@ export function PortalClient({ user, redemptions: initialRedemptions }: PortalCl
     <AppShell title="Commuter Portal" description="Enter ride codes and track your points" user={user}>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-up">
         {/* Points Summary & Progress Bar */}
-        <div className="lg:col-span-2 bg-white border border-border rounded-xl p-5 sm:p-6 shadow-sm space-y-6 flex flex-col justify-between">
+        <div className="lg:col-span-2 bg-white border border-border rounded-xl p-4 sm:p-6 shadow-sm space-y-6 flex flex-col justify-between">
           <div className="space-y-4">
             <div className="flex items-center justify-between gap-3">
               <h3 className="font-bold text-base flex items-center gap-2">
@@ -114,10 +114,10 @@ export function PortalClient({ user, redemptions: initialRedemptions }: PortalCl
                 {points} Points
               </span>
             </div>
-
+ 
             {/* Gamified progress bar */}
             <div className="space-y-2">
-              <div className="flex justify-between text-xs font-semibold flex-wrap gap-1">
+              <div className="flex justify-between text-[10px] sm:text-xs font-semibold flex-wrap gap-1">
                 <span className="text-muted-foreground">{points} / {currentGoal.goal} pts</span>
                 {currentGoal.diff > 0 ? (
                   <span className="text-brand font-medium">
@@ -127,7 +127,7 @@ export function PortalClient({ user, redemptions: initialRedemptions }: PortalCl
                   <span className="text-brand font-medium">Top Tier Commuter!</span>
                 )}
               </div>
-              <div className="w-full bg-surface border border-border h-4 rounded-full overflow-hidden">
+              <div className="w-full bg-surface border border-border h-3.5 sm:h-4 rounded-full overflow-hidden">
                 <div
                   className="bg-brand h-full transition-all duration-500 rounded-full"
                   style={{ width: `${percentComplete}%` }}
@@ -135,24 +135,24 @@ export function PortalClient({ user, redemptions: initialRedemptions }: PortalCl
               </div>
             </div>
           </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-6 border-t border-border mt-6">
+ 
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 pt-6 border-t border-border mt-6">
             {REWARDS.map((r) => (
               <button
                 key={r.label}
                 onClick={() => handleRewardRedeem(r.label, r.cost)}
                 disabled={points < r.cost || isPending}
                 className={cn(
-                  "p-4 rounded-xl border text-center transition-all flex flex-col justify-between items-center group cursor-pointer h-28 box-border",
+                  "p-2.5 sm:p-4 rounded-xl border text-center transition-all flex flex-col justify-between items-center group cursor-pointer h-auto min-h-[96px] sm:h-28 box-border",
                   points >= r.cost
                     ? "border-brand/20 bg-brand-soft/10 hover:bg-brand/5 hover:border-brand/40"
                     : "border-border bg-surface/50 opacity-40 cursor-not-allowed"
                 )}
               >
-                <Gift className={cn("size-5 mb-2 transition-transform group-hover:scale-110", points >= r.cost ? "text-brand" : "text-muted-foreground")} />
+                <Gift className={cn("size-4.5 sm:size-5 mb-1.5 sm:mb-2 transition-transform group-hover:scale-110", points >= r.cost ? "text-brand" : "text-muted-foreground")} />
                 <div>
-                  <p className="text-xs font-bold text-foreground truncate max-w-full">{r.label}</p>
-                  <p className="text-[10px] text-muted-foreground font-mono mt-1 font-semibold">
+                  <p className="text-[11px] sm:text-xs font-bold text-foreground truncate max-w-full">{r.label}</p>
+                  <p className="text-[9px] sm:text-[10px] text-muted-foreground font-mono mt-0.5 sm:mt-1 font-semibold">
                     {r.cost} pts
                   </p>
                 </div>
