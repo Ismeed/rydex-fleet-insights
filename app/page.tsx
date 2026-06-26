@@ -25,10 +25,26 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     redirect("/portal");
   }
 
-  const params = await searchParams;
-  const period = (params.period || "monthly") as PeriodType;
-  const startStr = params.start;
-  const endStr = params.end;
+  if (user.role === "VEHICLE_OWNER") {
+    redirect("/owner");
+  }
+
+  if (user.role === "OPERATIONS_OFFICER") {
+    redirect("/officer");
+  }
+
+  // Defensive searchParams Promise resolution
+  let resolvedParams: any = {};
+  try {
+    if (searchParams) {
+      resolvedParams = searchParams instanceof Promise ? await searchParams : searchParams;
+    }
+  } catch (e) {
+    resolvedParams = {};
+  }
+  const period = ((resolvedParams && resolvedParams.period) || "monthly") as PeriodType;
+  const startStr = resolvedParams && resolvedParams.start;
+  const endStr = resolvedParams && resolvedParams.end;
 
   const { start, end } = getPeriodDateRange(period, startStr, endStr);
 

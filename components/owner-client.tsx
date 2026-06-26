@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Area,
@@ -26,9 +27,7 @@ interface OwnerClientProps {
     monthlyRevenue: number;
     avgRevenuePerHour: number;
     avgRevenuePerKm: number;
-    totalCodes: number;
-    redeemedCodes: number;
-    engagementRate: number;
+    totalDistance: number;
   };
   revenue30d: Array<{ label: string; revenue: number }>;
   vehiclesList: any[];
@@ -44,6 +43,11 @@ export function OwnerClient({
   recentActivity,
   period,
 }: OwnerClientProps) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   return (
     <AppShell
       title="Investor Dashboard"
@@ -53,7 +57,7 @@ export function OwnerClient({
       <FilterBar />
 
       {/* KPI grid */}
-      <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
         <KpiCard
           label="Vehicles Owned"
           value={kpis.totalOwned}
@@ -85,9 +89,9 @@ export function OwnerClient({
           delayMs={60}
         />
         <KpiCard
-          label="Reward Engagement"
-          value={`${kpis.engagementRate}%`}
-          badge={{ label: `${kpis.redeemedCodes}/${kpis.totalCodes} Redeemed`, tone: "brand" }}
+          label="Distance Covered"
+          value={`${Math.round(kpis.totalDistance).toLocaleString()} KM`}
+          badge={{ label: "Selected Period", tone: "brand" }}
           delayMs={120}
         />
       </section>
@@ -114,45 +118,49 @@ export function OwnerClient({
             </div>
           </div>
           <div className="h-56 sm:h-64 -ml-2">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={revenue30d} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="muvaOwnerRev" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#0F8A5F" stopOpacity={0.25} />
-                    <stop offset="100%" stopColor="#0F8A5F" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
-                <XAxis
-                  dataKey="label"
-                  tick={{ fontSize: 10, fill: "#64748B" }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <YAxis
-                  tick={{ fontSize: 10, fill: "#64748B" }}
-                  axisLine={false}
-                  tickLine={false}
-                  width={48}
-                  tickFormatter={(v) => `₦${Math.round(v / 1000)}k`}
-                />
-                <Tooltip
-                  contentStyle={{
-                    border: "1px solid #E2E8F0",
-                    borderRadius: 8,
-                    fontSize: 12,
-                  }}
-                  formatter={(v: number) => [naira(v), "Revenue"]}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="revenue"
-                  stroke="#0F8A5F"
-                  strokeWidth={2}
-                  fill="url(#muvaOwnerRev)"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+            {mounted ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={revenue30d} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="muvaOwnerRev" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#0F8A5F" stopOpacity={0.25} />
+                      <stop offset="100%" stopColor="#0F8A5F" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
+                  <XAxis
+                    dataKey="label"
+                    tick={{ fontSize: 10, fill: "#64748B" }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 10, fill: "#64748B" }}
+                    axisLine={false}
+                    tickLine={false}
+                    width={48}
+                    tickFormatter={(v) => `₦${Math.round(v / 1000)}k`}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      border: "1px solid #E2E8F0",
+                      borderRadius: 8,
+                      fontSize: 12,
+                    }}
+                    formatter={(v: number) => [naira(v), "Revenue"]}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="revenue"
+                    stroke="#0F8A5F"
+                    strokeWidth={2}
+                    fill="url(#muvaOwnerRev)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full w-full bg-slate-50 animate-pulse rounded-lg" />
+            )}
           </div>
         </div>
 

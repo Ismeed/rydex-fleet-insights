@@ -8,8 +8,12 @@ export const dynamic = "force-dynamic";
 
 export default async function PassengersPage() {
   const user = await getCurrentUser();
-  if (!user || user.role === "PASSENGER") {
+  if (!user) {
     redirect("/login");
+  }
+
+  if (user.role !== "SUPER_ADMIN") {
+    redirect("/");
   }
 
   const users = await dbService.getUsers();
@@ -33,7 +37,7 @@ export default async function PassengersPage() {
 
   return (
     <AppShell title="Passenger Directory" description="Registered MUVA riders and loyalty engagement" user={user}>
-      <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
         <KpiCard label="Total Passengers" value={totalPassengers > 0 ? totalPassengers : "1,284"} />
         <KpiCard label="Active Commuters" value={totalPassengers > 0 ? Math.max(1, Math.round(totalPassengers * 0.6)) : "742"} delayMs={60} />
         <KpiCard label="Avg Points / User" value={avgPoints} delayMs={120} />

@@ -15,7 +15,7 @@ import { KpiCard } from "@/components/kpi-card";
 import { FilterBar } from "@/components/filter-bar";
 import { compactNaira, naira } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { useState, useTransition } from "react";
+import { useState, useEffect, useTransition } from "react";
 import { deliverRewardAction } from "@/app/actions";
 import { toast } from "sonner";
 import { Plus, Check, ArrowRight } from "lucide-react";
@@ -52,6 +52,10 @@ export function DashboardClient({
 }: DashboardClientProps) {
   const [pending, setPending] = useState(initialPending);
   const [isPending, startTransition] = useTransition();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleApprove = async (id: string) => {
     startTransition(async () => {
@@ -74,7 +78,7 @@ export function DashboardClient({
       <FilterBar />
 
       {/* KPI grid */}
-      <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
         <KpiCard
           label={
             period === "daily"
@@ -140,45 +144,49 @@ export function DashboardClient({
             </div>
           </div>
           <div className="h-56 sm:h-64 -ml-2">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={revenue30d} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="muvaRev" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#0F8A5F" stopOpacity={0.25} />
-                    <stop offset="100%" stopColor="#0F8A5F" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
-                <XAxis
-                  dataKey="label"
-                  tick={{ fontSize: 10, fill: "#64748B" }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <YAxis
-                  tick={{ fontSize: 10, fill: "#64748B" }}
-                  axisLine={false}
-                  tickLine={false}
-                  width={48}
-                  tickFormatter={(v) => `₦${Math.round(v / 1000)}k`}
-                />
-                <Tooltip
-                  contentStyle={{
-                    border: "1px solid #E2E8F0",
-                    borderRadius: 8,
-                    fontSize: 12,
-                  }}
-                  formatter={(v: number) => [naira(v), "Revenue"]}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="revenue"
-                  stroke="#0F8A5F"
-                  strokeWidth={2}
-                  fill="url(#muvaRev)"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+            {mounted ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={revenue30d} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="muvaRev" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#0F8A5F" stopOpacity={0.25} />
+                      <stop offset="100%" stopColor="#0F8A5F" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
+                  <XAxis
+                    dataKey="label"
+                    tick={{ fontSize: 10, fill: "#64748B" }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 10, fill: "#64748B" }}
+                    axisLine={false}
+                    tickLine={false}
+                    width={48}
+                    tickFormatter={(v) => `₦${Math.round(v / 1000)}k`}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      border: "1px solid #E2E8F0",
+                      borderRadius: 8,
+                      fontSize: 12,
+                    }}
+                    formatter={(v: number) => [naira(v), "Revenue"]}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="revenue"
+                    stroke="#0F8A5F"
+                    strokeWidth={2}
+                    fill="url(#muvaRev)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full w-full bg-slate-50 animate-pulse rounded-lg" />
+            )}
           </div>
         </div>
 

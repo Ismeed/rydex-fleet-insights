@@ -45,6 +45,13 @@ const OWNER_NAV = [
   { href: "/reports", label: "Reports", icon: FileText },
 ] as const;
 
+const OFFICER_NAV = [
+  { href: "/officer", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/shifts", label: "Shift Control", icon: ClipboardList },
+  { href: "/batches", label: "Code Batches", icon: QrCode },
+  { href: "/reports", label: "Reports", icon: FileText },
+] as const;
+
 export function AppShell({
   title,
   description,
@@ -56,7 +63,8 @@ export function AppShell({
   description?: string;
   actions?: ReactNode;
   children: ReactNode;
-  }) {
+  user?: { name: string; role: string };
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -81,7 +89,9 @@ export function AppShell({
 
   const isPassenger = user?.role === "PASSENGER";
   const isOwner = user?.role === "VEHICLE_OWNER";
-  const isStaff = user?.role === "SUPER_ADMIN" || user?.role === "OPERATIONS_OFFICER";
+  const isOfficer = user?.role === "OPERATIONS_OFFICER";
+  const isAdmin = user?.role === "SUPER_ADMIN";
+  const isStaff = isAdmin || isOfficer;
 
   return (
     <div className="flex min-h-screen bg-surface text-foreground font-sans">
@@ -98,7 +108,7 @@ export function AppShell({
         </div>
 
         <nav className="flex-1 px-4 space-y-1 mt-2 overflow-y-auto">
-          {isStaff && (
+          {isAdmin && (
             <>
               {PRIMARY_NAV.map((item) => (
                 <Link
@@ -120,6 +130,29 @@ export function AppShell({
                 Passenger Loyalty
               </div>
               {LOYALTY_NAV.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                    isActive(item.href)
+                      ? "bg-white/10 text-white"
+                      : "text-white/60 hover:text-white hover:bg-white/5"
+                  )}
+                >
+                  <item.icon className="size-4 shrink-0" strokeWidth={2} />
+                  <span className="truncate">{item.label}</span>
+                </Link>
+              ))}
+            </>
+          )}
+
+          {isOfficer && (
+            <>
+              <div className="pt-2 pb-2 px-3 text-[10px] font-bold text-white/30 uppercase tracking-widest">
+                Operations Menu
+              </div>
+              {OFFICER_NAV.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
@@ -243,7 +276,7 @@ export function AppShell({
       {mobileMenuOpen && (
         <div className="lg:hidden fixed inset-0 top-16 bg-sidebar text-sidebar-foreground z-30 flex flex-col p-4 space-y-4">
           <nav className="flex-1 space-y-1">
-            {isStaff && (
+            {isAdmin && (
               <>
                 {PRIMARY_NAV.map((item) => (
                   <Link
@@ -283,8 +316,35 @@ export function AppShell({
               </>
             )}
 
+            {isOfficer && (
+              <>
+                <div className="pb-2 px-3 text-xs font-bold text-white/30 uppercase tracking-widest">
+                  Operations Menu
+                </div>
+                {OFFICER_NAV.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-2.5 rounded-md text-base font-medium transition-colors",
+                      isActive(item.href)
+                        ? "bg-white/10 text-white"
+                        : "text-white/60 hover:text-white"
+                    )}
+                  >
+                    <item.icon className="size-5 shrink-0" />
+                    <span>{item.label}</span>
+                  </Link>
+                ))}
+              </>
+            )}
+
             {isOwner && (
               <>
+                <div className="pb-2 px-3 text-xs font-bold text-white/30 uppercase tracking-widest">
+                  Investor Menu
+                </div>
                 {OWNER_NAV.map((item) => (
                   <Link
                     key={item.href}
@@ -328,7 +388,13 @@ export function AppShell({
                   {user?.name || "MUVA User"}
                 </span>
                 <span className="text-[10px] text-white/40 truncate">
-                  {user?.role === "SUPER_ADMIN" ? "Super Admin" : "Operations Officer"}
+                  {user?.role === "SUPER_ADMIN"
+                    ? "Super Admin"
+                    : user?.role === "OPERATIONS_OFFICER"
+                    ? "Ops Officer"
+                    : user?.role === "VEHICLE_OWNER"
+                    ? "Vehicle Owner"
+                    : "Passenger"}
                 </span>
               </div>
             </div>

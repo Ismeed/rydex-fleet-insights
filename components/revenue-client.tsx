@@ -9,6 +9,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { useState, useEffect } from "react";
 import { AppShell } from "@/components/app-shell";
 import { KpiCard } from "@/components/kpi-card";
 import { FilterBar } from "@/components/filter-bar";
@@ -34,6 +35,11 @@ export function RevenueClient({
   flaggedShifts,
   period,
 }: RevenueClientProps) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   return (
     <AppShell
       title="Revenue Analytics"
@@ -42,7 +48,7 @@ export function RevenueClient({
     >
       <FilterBar />
 
-      <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
         <KpiCard
           label={
             period === "daily"
@@ -75,37 +81,41 @@ export function RevenueClient({
         <h3 className="font-bold mb-1 text-base">Revenue by Vehicle</h3>
         <p className="text-xs text-muted-foreground mb-5">Totals across the active fleet for the selected period</p>
         <div className="h-72">
-          {revenuePerVehicle.length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={revenuePerVehicle}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
-                <XAxis
-                  dataKey="vehicle"
-                  tick={{ fontSize: 10, fill: "#64748B" }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <YAxis
-                  tick={{ fontSize: 10, fill: "#64748B" }}
-                  axisLine={false}
-                  tickLine={false}
-                  tickFormatter={(v) => `₦${Math.round(v / 1000)}k`}
-                />
-                <Tooltip
-                  formatter={(v: number) => [naira(v), "Revenue"]}
-                  contentStyle={{
-                    border: "1px solid #E2E8F0",
-                    borderRadius: 8,
-                    fontSize: 12,
-                  }}
-                />
-                <Bar dataKey="revenue" fill="#0F8A5F" radius={[6, 6, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+          {mounted ? (
+            revenuePerVehicle.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={revenuePerVehicle}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
+                  <XAxis
+                    dataKey="vehicle"
+                    tick={{ fontSize: 10, fill: "#64748B" }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 10, fill: "#64748B" }}
+                    axisLine={false}
+                    tickLine={false}
+                    tickFormatter={(v) => `₦${Math.round(v / 1000)}k`}
+                  />
+                  <Tooltip
+                    formatter={(v: number) => [naira(v), "Revenue"]}
+                    contentStyle={{
+                      border: "1px solid #E2E8F0",
+                      borderRadius: 8,
+                      fontSize: 12,
+                    }}
+                  />
+                  <Bar dataKey="revenue" fill="#0F8A5F" radius={[6, 6, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
+                No vehicle revenue logged today
+              </div>
+            )
           ) : (
-            <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
-              No vehicle revenue logged today
-            </div>
+            <div className="h-full w-full bg-slate-50 animate-pulse rounded-lg" />
           )}
         </div>
       </section>

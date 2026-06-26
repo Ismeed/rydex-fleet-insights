@@ -4,6 +4,7 @@ import { dbService } from "@/lib/db-service";
 import { emailService } from "@/lib/email-service";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
+import { getCurrentUser } from "@/lib/session-helper";
 
 export async function loginAction(prevState: any, formData: FormData) {
   try {
@@ -77,6 +78,11 @@ export async function signupAction(prevState: any, formData: FormData) {
 
 export async function startShiftAction(prevState: any, formData: FormData) {
   try {
+    const user = await getCurrentUser();
+    if (!user || (user.role !== "SUPER_ADMIN" && user.role !== "OPERATIONS_OFFICER")) {
+      return { success: false, error: "Unauthorized. Operational permissions required." };
+    }
+
     const vehicleId = formData.get("vehicleId") as string;
     const driverId = formData.get("driverId") as string;
     const startOdo = parseFloat(formData.get("startOdometer") as string);
@@ -100,6 +106,11 @@ export async function startShiftAction(prevState: any, formData: FormData) {
 
 export async function endShiftAction(prevState: any, formData: FormData) {
   try {
+    const user = await getCurrentUser();
+    if (!user || (user.role !== "SUPER_ADMIN" && user.role !== "OPERATIONS_OFFICER")) {
+      return { success: false, error: "Unauthorized. Operational permissions required." };
+    }
+
     const shiftId = formData.get("shiftId") as string;
     const endOdo = parseFloat(formData.get("endOdometer") as string);
     const revenue = parseFloat(formData.get("revenue") as string);
@@ -124,6 +135,11 @@ export async function endShiftAction(prevState: any, formData: FormData) {
 
 export async function generateBatchAction(prevState: any, formData: FormData) {
   try {
+    const user = await getCurrentUser();
+    if (!user || (user.role !== "SUPER_ADMIN" && user.role !== "OPERATIONS_OFFICER")) {
+      return { success: false, error: "Unauthorized. Operational permissions required." };
+    }
+
     const vehicleId = formData.get("vehicleId") as string;
     const driverId = formData.get("driverId") as string;
     const codeCount = parseInt(formData.get("codeCount") as string);
@@ -184,6 +200,11 @@ export async function requestRedemptionAction(rewardRequested: string, pointsUse
 
 export async function deliverRewardAction(redemptionId: string) {
   try {
+    const user = await getCurrentUser();
+    if (!user || user.role !== "SUPER_ADMIN") {
+      return { success: false, error: "Unauthorized. Super Admin permissions required." };
+    }
+
     if (!redemptionId) {
       return { success: false, error: "Redemption ID is required." };
     }
@@ -211,18 +232,24 @@ export async function deliverRewardAction(redemptionId: string) {
 
 export async function createVehicleAction(prevState: any, formData: FormData) {
   try {
+    const user = await getCurrentUser();
+    if (!user || (user.role !== "SUPER_ADMIN" && user.role !== "VEHICLE_OWNER")) {
+      return { success: false, error: "Unauthorized. Administrative permissions required." };
+    }
+
     const id = formData.get("id") as string;
     const vehicleNumber = formData.get("vehicleNumber") as string;
     const plateNumber = formData.get("plateNumber") as string;
     const vehicleType = formData.get("vehicleType") as string;
     const fuelType = formData.get("fuelType") as string;
-    const ownerId = formData.get("ownerId") as string;
     const assignedDriverId = formData.get("assignedDriverId") as string;
     const status = formData.get("status") as string;
 
     if (!id || !vehicleNumber || !plateNumber) {
       return { success: false, error: "Vehicle ID, Number, and Plate Number are required." };
     }
+
+    const ownerId = user.role === "VEHICLE_OWNER" ? user.id : (formData.get("ownerId") as string);
 
     await dbService.createVehicle({
       id: id.toLowerCase().trim(),
@@ -245,28 +272,47 @@ export async function createVehicleAction(prevState: any, formData: FormData) {
 
 export async function updateVehicleAction(prevState: any, formData: FormData) {
   try {
-    const id = formData.get("id") as string;
-    const vehicleNumber = formData.get("vehicleNumber") as string;
-    const plateNumber = formData.get("plateNumber") as string;
-    const vehicleType = formData.get("vehicleType") as string;
-    const fuelType = formData.get("fuelType") as string;
-    const ownerId = formData.get("ownerId") as string;
-    const assignedDriverId = formData.get("assignedDriverId") as string;
-    const status = formData.get("status") as string;
+    const user = await getCurrentUser();
+    if (!user || (user.role !== "SUPER_ADMIN" && user.role !== "VEHICLE_OWNER" && user.role !== "OPERATIONS_OFFICER")) {
+      return { success: false, error: "Unauthorized. Action permissions required." };
+    }
 
+    const id = formData.get("id") as string;
     if (!id) {
       return { success: false, error: "Vehicle ID is required." };
     }
 
-    await dbService.updateVehicle(id, {
-      vehicleNumber: vehicleNumber || undefined,
-      plateNumber: plateNumber || undefined,
-      vehicleType: vehicleType || undefined,
-      fuelType: fuelType || undefined,
-      ownerId: ownerId === "none" ? null : ownerId || null,
-      assignedDriverId: assignedDriverId === "none" ? null : assignedDriverId || null,
-      status: status || undefined,
-    });
+    if (user.role === "VEHICLE_OWNER") {
+      const existing = await dbService.getVehicleById(id);
+      if (!existing || existing.ownerId !== user.id) {
+        return { success: false, error: "Unauthorized. You do not own this vehicle." };
+      }
+    }
+
+    const vehicleNumber = formData.get("vehicleNumber") as string;
+    const plateNumber = formData.get("plateNumber") as string;
+    const vehicleType = formData.get("vehicleType") as string;
+    const fuelType = formData.get("fuelType") as string;
+    const assignedDriverId = formData.get("assignedDriverId") as string;
+    const status = formData.get("status") as string;
+
+    if (user.role === "OPERATIONS_OFFICER") {
+      await dbService.updateVehicle(id, {
+        assignedDriverId: assignedDriverId === "none" ? null : assignedDriverId || null,
+        status: status || undefined,
+      });
+    } else {
+      const ownerId = user.role === "VEHICLE_OWNER" ? user.id : (formData.get("ownerId") as string);
+      await dbService.updateVehicle(id, {
+        vehicleNumber: vehicleNumber || undefined,
+        plateNumber: plateNumber || undefined,
+        vehicleType: vehicleType || undefined,
+        fuelType: fuelType || undefined,
+        ownerId: ownerId === "none" ? null : ownerId || null,
+        assignedDriverId: assignedDriverId === "none" ? null : assignedDriverId || null,
+        status: status || undefined,
+      });
+    }
 
     revalidatePath("/vehicles");
     revalidatePath(`/vehicles/${id}`);
@@ -279,9 +325,22 @@ export async function updateVehicleAction(prevState: any, formData: FormData) {
 
 export async function disableVehicleAction(id: string) {
   try {
+    const user = await getCurrentUser();
+    if (!user || (user.role !== "SUPER_ADMIN" && user.role !== "VEHICLE_OWNER")) {
+      return { success: false, error: "Unauthorized. Administrative permissions required." };
+    }
+
     if (!id) {
       return { success: false, error: "Vehicle ID is required." };
     }
+
+    if (user.role === "VEHICLE_OWNER") {
+      const existing = await dbService.getVehicleById(id);
+      if (!existing || existing.ownerId !== user.id) {
+        return { success: false, error: "Unauthorized. You do not own this vehicle." };
+      }
+    }
+
     await dbService.disableVehicle(id);
     revalidatePath("/vehicles");
     revalidatePath(`/vehicles/${id}`);
@@ -294,6 +353,11 @@ export async function disableVehicleAction(id: string) {
 
 export async function createDriverAction(prevState: any, formData: FormData) {
   try {
+    const user = await getCurrentUser();
+    if (!user || user.role !== "SUPER_ADMIN") {
+      return { success: false, error: "Unauthorized. Super Admin permissions required." };
+    }
+
     const name = formData.get("name") as string;
     const phone = formData.get("phone") as string;
     const address = formData.get("address") as string;
@@ -324,6 +388,11 @@ export async function createDriverAction(prevState: any, formData: FormData) {
 
 export async function updateDriverAction(prevState: any, formData: FormData) {
   try {
+    const user = await getCurrentUser();
+    if (!user || user.role !== "SUPER_ADMIN") {
+      return { success: false, error: "Unauthorized. Super Admin permissions required." };
+    }
+
     const id = formData.get("id") as string;
     const name = formData.get("name") as string;
     const phone = formData.get("phone") as string;
@@ -356,6 +425,11 @@ export async function updateDriverAction(prevState: any, formData: FormData) {
 
 export async function suspendDriverAction(id: string) {
   try {
+    const user = await getCurrentUser();
+    if (!user || user.role !== "SUPER_ADMIN") {
+      return { success: false, error: "Unauthorized. Super Admin permissions required." };
+    }
+
     if (!id) {
       return { success: false, error: "Driver ID is required." };
     }
@@ -371,6 +445,11 @@ export async function suspendDriverAction(id: string) {
 
 export async function createOwnerAction(prevState: any, formData: FormData) {
   try {
+    const user = await getCurrentUser();
+    if (!user || user.role !== "SUPER_ADMIN") {
+      return { success: false, error: "Unauthorized. Super Admin permissions required." };
+    }
+
     const name = formData.get("name") as string;
     const phone = formData.get("phone") as string;
     const email = formData.get("email") as string;
@@ -406,6 +485,11 @@ export async function createOwnerAction(prevState: any, formData: FormData) {
 
 export async function updateOwnerAction(prevState: any, formData: FormData) {
   try {
+    const user = await getCurrentUser();
+    if (!user || user.role !== "SUPER_ADMIN") {
+      return { success: false, error: "Unauthorized. Super Admin permissions required." };
+    }
+
     const id = formData.get("id") as string;
     const name = formData.get("name") as string;
     const phone = formData.get("phone") as string;
@@ -433,6 +517,11 @@ export async function updateOwnerAction(prevState: any, formData: FormData) {
 
 export async function suspendOwnerAction(id: string) {
   try {
+    const user = await getCurrentUser();
+    if (!user || user.role !== "SUPER_ADMIN") {
+      return { success: false, error: "Unauthorized. Super Admin permissions required." };
+    }
+
     if (!id) {
       return { success: false, error: "Owner ID is required." };
     }
@@ -447,6 +536,11 @@ export async function suspendOwnerAction(id: string) {
 
 export async function unsuspendOwnerAction(id: string) {
   try {
+    const user = await getCurrentUser();
+    if (!user || user.role !== "SUPER_ADMIN") {
+      return { success: false, error: "Unauthorized. Super Admin permissions required." };
+    }
+
     if (!id) {
       return { success: false, error: "Owner ID is required." };
     }
@@ -461,6 +555,11 @@ export async function unsuspendOwnerAction(id: string) {
 
 export async function recordBatchPrintAction(batchId: string, userName: string) {
   try {
+    const user = await getCurrentUser();
+    if (!user || (user.role !== "SUPER_ADMIN" && user.role !== "OPERATIONS_OFFICER")) {
+      return { success: false, error: "Unauthorized. Operational permissions required." };
+    }
+
     if (!batchId || !userName) {
       return { success: false, error: "Batch ID and User Name are required." };
     }
@@ -474,6 +573,11 @@ export async function recordBatchPrintAction(batchId: string, userName: string) 
 
 export async function deleteBatchAction(batchId: string) {
   try {
+    const user = await getCurrentUser();
+    if (!user || (user.role !== "SUPER_ADMIN" && user.role !== "OPERATIONS_OFFICER")) {
+      return { success: false, error: "Unauthorized. Operational permissions required." };
+    }
+
     if (!batchId) {
       return { success: false, error: "Batch ID is required." };
     }
@@ -485,3 +589,35 @@ export async function deleteBatchAction(batchId: string) {
     return { success: false, error: error.message || "Failed to delete batch." };
   }
 }
+
+export async function recordDailyRevenueAction(prevState: any, formData: FormData) {
+  try {
+    const user = await getCurrentUser();
+    if (!user || (user.role !== "SUPER_ADMIN" && user.role !== "OPERATIONS_OFFICER")) {
+      return { success: false, error: "Unauthorized. Operational permissions required." };
+    }
+
+    const vehicleId = formData.get("vehicleId") as string;
+    const driverId = formData.get("driverId") as string;
+    const revenue = parseFloat(formData.get("revenue") as string);
+    const dateStr = formData.get("date") as string;
+    const notes = formData.get("notes") as string;
+
+    if (!vehicleId || !driverId || isNaN(revenue) || !dateStr) {
+      return { success: false, error: "Please enter vehicle, driver, revenue, and date." };
+    }
+
+    await dbService.recordDailyRevenue(vehicleId, driverId, revenue, dateStr, notes);
+
+    revalidatePath("/officer");
+    revalidatePath("/shifts");
+    revalidatePath("/");
+    revalidatePath("/revenue");
+    revalidatePath("/reports");
+
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || "Failed to record daily revenue." };
+  }
+}
+

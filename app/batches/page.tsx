@@ -7,8 +7,12 @@ export const dynamic = "force-dynamic";
 
 export default async function BatchesPage() {
   const user = await getCurrentUser();
-  if (!user || user.role === "PASSENGER") {
+  if (!user) {
     redirect("/login");
+  }
+
+  if (user.role !== "SUPER_ADMIN" && user.role !== "OPERATIONS_OFFICER") {
+    redirect("/");
   }
 
   const batches = await dbService.getBatches();

@@ -109,7 +109,7 @@ export function BatchesClient({
       description="Generate non-sequential, single-use codes for passenger distribution"
       user={user}
     >
-      <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
         <KpiCard label="Codes Generated" value={kpis.generated.toLocaleString()} />
         <KpiCard label="Codes Assigned" value={kpis.assigned.toLocaleString()} delayMs={60} />
         <KpiCard label="Codes Redeemed" value={kpis.redeemed.toLocaleString()} delayMs={120} />

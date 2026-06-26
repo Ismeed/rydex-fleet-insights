@@ -7,7 +7,7 @@ import { filterByDateRange, getPeriodDateRange, PeriodType } from "@/lib/date-fi
 export const dynamic = "force-dynamic";
 
 interface RevenuePageProps {
-  searchParams: Promise<{
+  searchParams?: Promise<{
     period?: string;
     start?: string;
     end?: string;
@@ -16,14 +16,26 @@ interface RevenuePageProps {
 
 export default async function RevenuePage({ searchParams }: RevenuePageProps) {
   const user = await getCurrentUser();
-  if (!user || user.role === "PASSENGER") {
+  if (!user) {
     redirect("/login");
   }
 
-  const params = await searchParams;
-  const period = (params.period || "monthly") as PeriodType;
-  const startStr = params.start;
-  const endStr = params.end;
+  if (user.role !== "SUPER_ADMIN") {
+    redirect("/");
+  }
+
+  // Defensive searchParams Promise resolution
+  let resolvedParams: any = {};
+  try {
+    if (searchParams) {
+      resolvedParams = searchParams instanceof Promise ? await searchParams : searchParams;
+    }
+  } catch (e) {
+    resolvedParams = {};
+  }
+  const period = ((resolvedParams && resolvedParams.period) || "monthly") as PeriodType;
+  const startStr = resolvedParams && resolvedParams.start;
+  const endStr = resolvedParams && resolvedParams.end;
 
   const { start, end } = getPeriodDateRange(period, startStr, endStr);
 

@@ -47,7 +47,7 @@ export function KpiCard({
       </div>
 
       <div className="mt-3 flex items-baseline gap-2 flex-wrap">
-        <span className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground font-mono">
+        <span className="text-xl sm:text-2xl xl:text-3xl font-extrabold tracking-tight text-foreground font-mono">
           {value}
         </span>
       </div>

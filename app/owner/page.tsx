@@ -7,11 +7,11 @@ import { filterByDateRange, getPeriodDateRange, getChartDataForPeriod, PeriodTyp
 export const dynamic = "force-dynamic";
 
 interface VehicleOwnerPageProps {
-  searchParams: Promise<{
+  searchParams?: Promise<{
     period?: string;
     start?: string;
     end?: string;
-  }>;
+  }> | any;
 }
 
 export default async function VehicleOwnerPage({ searchParams }: VehicleOwnerPageProps) {
@@ -24,10 +24,18 @@ export default async function VehicleOwnerPage({ searchParams }: VehicleOwnerPag
     redirect("/");
   }
 
-  const params = await searchParams;
-  const period = (params.period || "monthly") as PeriodType;
-  const startStr = params.start;
-  const endStr = params.end;
+  // Defensive searchParams Promise resolution
+  let resolvedParams: any = {};
+  try {
+    if (searchParams) {
+      resolvedParams = searchParams instanceof Promise ? await searchParams : searchParams;
+    }
+  } catch (e) {
+    resolvedParams = {};
+  }
+  const period = ((resolvedParams && resolvedParams.period) || "monthly") as PeriodType;
+  const startStr = resolvedParams && resolvedParams.start;
+  const endStr = resolvedParams && resolvedParams.end;
 
   const { start, end } = getPeriodDateRange(period, startStr, endStr);
 
@@ -74,15 +82,6 @@ export default async function VehicleOwnerPage({ searchParams }: VehicleOwnerPag
   const avgRevenuePerKm = totalDistance > 0 ? Math.round(periodRevenue / totalDistance) : 0;
   const avgRevenuePerHour = totalHours > 0 ? Math.round(periodRevenue / totalHours) : 0;
 
-  // Reward Engagement Calculations in period
-  const rewardCodes = await dbService.getRewardCodes();
-  const ownedCodes = rewardCodes.filter((c) => ownedVehicleIds.includes(c.vehicleId));
-  const filteredOwnedCodes = filterByDateRange(ownedCodes, (c) => c.dateGenerated, period, startStr, endStr);
-
-  const totalCodes = filteredOwnedCodes.length;
-  const redeemedCodes = filteredOwnedCodes.filter((c) => c.status === "REDEEMED").length;
-  const engagementRate = totalCodes > 0 ? Math.round((redeemedCodes / totalCodes) * 100) : 0;
-
   // Recent Activity: Last 5 shifts
   const recentActivity = filteredShifts.slice(0, 5).map((s) => ({
     id: s.id,
@@ -117,9 +116,7 @@ export default async function VehicleOwnerPage({ searchParams }: VehicleOwnerPag
     monthlyRevenue: monthlyRevenue > 0 ? monthlyRevenue : 2415000,
     avgRevenuePerHour,
     avgRevenuePerKm,
-    totalCodes,
-    redeemedCodes,
-    engagementRate,
+    totalDistance,
   };
 
   return (

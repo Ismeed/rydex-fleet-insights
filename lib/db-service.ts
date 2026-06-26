@@ -1261,4 +1261,89 @@ export const dbService = {
     saveFallbackData(store);
     return true;
   },
+
+  async recordDailyRevenue(vehicleId: string, driverId: string, revenue: number, dateStr: string, notes?: string) {
+    const searchDate = new Date(dateStr);
+    const startOfDay = new Date(searchDate);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(searchDate);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    if (isPrismaEnabled()) {
+      let shift = await prisma.shift.findFirst({
+        where: {
+          vehicleId,
+          driverId,
+          startTime: {
+            gte: startOfDay,
+            lte: endOfDay
+          }
+        },
+        orderBy: { startTime: "desc" }
+      });
+
+      if (!shift) {
+        shift = await prisma.shift.findFirst({
+          where: { vehicleId, driverId },
+          orderBy: { startTime: "desc" }
+        });
+      }
+
+      if (shift) {
+        return await prisma.shift.update({
+          where: { id: shift.id },
+          data: { revenue }
+        });
+      } else {
+        return await prisma.shift.create({
+          data: {
+            vehicleId,
+            driverId,
+            startTime: startOfDay,
+            endTime: endOfDay,
+            startOdometer: 0,
+            endOdometer: 0,
+            revenue,
+            status: "ENDED"
+          }
+        });
+      }
+    }
+
+    const store = loadFallbackData();
+    let shift = store.shifts.find((s) => {
+      const d = new Date(s.startTime);
+      return s.vehicleId === vehicleId && s.driverId === driverId && d >= startOfDay && d <= endOfDay;
+    });
+
+    if (!shift) {
+      shift = [...store.shifts].reverse().find((s) => s.vehicleId === vehicleId && s.driverId === driverId);
+    }
+
+    if (shift) {
+      shift.revenue = revenue;
+      const idx = store.shifts.findIndex((s) => s.id === shift.id);
+      store.shifts[idx] = shift;
+    } else {
+      const newShift = {
+        id: `s-${Date.now()}`,
+        vehicleId,
+        driverId,
+        startTime: startOfDay.toISOString(),
+        endTime: endOfDay.toISOString(),
+        startOdometer: 0,
+        endOdometer: 0,
+        revenue,
+        hoursWorked: 8,
+        minutesWorked: 0,
+        distanceCovered: 50,
+        status: "ENDED",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      store.shifts.push(newShift);
+    }
+    saveFallbackData(store);
+    return true;
+  },
 };

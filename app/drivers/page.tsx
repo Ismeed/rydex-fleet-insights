@@ -8,8 +8,12 @@ export const dynamic = "force-dynamic";
 
 export default async function DriversPage() {
   const user = await getCurrentUser();
-  if (!user || user.role === "PASSENGER") {
+  if (!user) {
     redirect("/login");
+  }
+
+  if (user.role !== "SUPER_ADMIN") {
+    redirect("/");
   }
 
   const drivers = await dbService.getDrivers();

@@ -181,7 +181,9 @@ export function ReportsClient({
     { icon: FileText, label: "Daily Operations", desc: "Per-shift activity, revenue, distance records", action: exportDailyOps },
     { icon: Car, label: "Vehicle Performance", desc: "Plate details, fuel types, statuses, registry", action: exportVehicles },
     { icon: Users, label: "Driver Performance", desc: "Driver roster, phone contacts, guarantors, averages", action: exportDrivers },
-    { icon: Gift, label: "Reward Redemptions", desc: "Passenger loyalty code exchanges, approvals queue", action: exportRewards },
+    ...(user.role === "SUPER_ADMIN"
+      ? [{ icon: Gift, label: "Reward Redemptions", desc: "Passenger loyalty code exchanges, approvals queue", action: exportRewards }]
+      : []),
   ];
 
   return (

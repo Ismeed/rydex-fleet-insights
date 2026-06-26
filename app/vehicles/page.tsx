@@ -8,16 +8,36 @@ export const dynamic = "force-dynamic";
 
 export default async function VehiclesPage() {
   const user = await getCurrentUser();
-  if (!user || user.role === "PASSENGER") {
+  if (!user) {
     redirect("/login");
   }
 
-  const vehicles = await dbService.getVehicles();
-  const drivers = await dbService.getDrivers();
+  if (
+    user.role !== "SUPER_ADMIN" &&
+    user.role !== "VEHICLE_OWNER" &&
+    user.role !== "OPERATIONS_OFFICER"
+  ) {
+    redirect("/");
+  }
+
+  const vehicles = user.role === "VEHICLE_OWNER"
+    ? await dbService.getVehicles(user.id)
+    : await dbService.getVehicles();
+
+  const rawDrivers = await dbService.getDrivers();
+  const drivers = user.role === "VEHICLE_OWNER"
+    ? rawDrivers.filter((d) => d.assignedVehicle?.ownerId === user.id)
+    : rawDrivers;
+
   const allUsers = await dbService.getUsers();
   
   // Filter for users who can own vehicles
-  const owners = allUsers.filter((u) => u.role === "VEHICLE_OWNER" || u.role === "SUPER_ADMIN");
+  const owners = allUsers.filter((u) => {
+    if (user.role === "VEHICLE_OWNER") {
+      return u.id === user.id;
+    }
+    return u.role === "VEHICLE_OWNER" || u.role === "SUPER_ADMIN";
+  });
 
   // Adapt the returned db format to the registry type
   const formattedVehicles = vehicles.map((v) => ({
@@ -63,6 +83,7 @@ export default async function VehiclesPage() {
         initialVehicles={formattedVehicles}
         drivers={formattedDrivers}
         owners={formattedOwners}
+        currentUser={user}
       />
     </AppShell>
   );

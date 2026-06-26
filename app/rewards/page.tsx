@@ -7,8 +7,12 @@ export const dynamic = "force-dynamic";
 
 export default async function RewardsPage() {
   const user = await getCurrentUser();
-  if (!user || user.role === "PASSENGER") {
+  if (!user) {
     redirect("/login");
+  }
+
+  if (user.role !== "SUPER_ADMIN") {
+    redirect("/");
   }
 
   const redemptions = await dbService.getRedemptions();

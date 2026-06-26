@@ -8,8 +8,12 @@ export const dynamic = "force-dynamic";
 
 export default async function OwnersPage() {
   const user = await getCurrentUser();
-  if (!user || (user.role !== "SUPER_ADMIN" && user.role !== "OPERATIONS_OFFICER")) {
+  if (!user) {
     redirect("/login");
+  }
+
+  if (user.role !== "SUPER_ADMIN") {
+    redirect("/");
   }
 
   // Fetch all users to find owners

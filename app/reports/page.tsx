@@ -7,7 +7,7 @@ import { filterByDateRange, getPeriodDateRange, PeriodType } from "@/lib/date-fi
 export const dynamic = "force-dynamic";
 
 interface ReportsPageProps {
-  searchParams: Promise<{
+  searchParams?: Promise<{
     period?: string;
     start?: string;
     end?: string;
@@ -16,21 +16,44 @@ interface ReportsPageProps {
 
 export default async function ReportsPage({ searchParams }: ReportsPageProps) {
   const user = await getCurrentUser();
-  if (!user || user.role === "PASSENGER") {
+  if (!user) {
     redirect("/login");
   }
 
-  const params = await searchParams;
-  const period = (params.period || "monthly") as PeriodType;
-  const startStr = params.start;
-  const endStr = params.end;
+  if (user.role === "PASSENGER") {
+    redirect("/");
+  }
+
+  // Defensive searchParams Promise resolution
+  let resolvedParams: any = {};
+  try {
+    if (searchParams) {
+      resolvedParams = searchParams instanceof Promise ? await searchParams : searchParams;
+    }
+  } catch (e) {
+    resolvedParams = {};
+  }
+  const period = ((resolvedParams && resolvedParams.period) || "monthly") as PeriodType;
+  const startStr = resolvedParams && resolvedParams.start;
+  const endStr = resolvedParams && resolvedParams.end;
 
   const { start, end } = getPeriodDateRange(period, startStr, endStr);
 
-  const shifts = await dbService.getShiftsHistory();
-  const vehicles = await dbService.getVehicles();
-  const drivers = await dbService.getDrivers();
-  const redemptions = await dbService.getRedemptions();
+  const shifts = user.role === "VEHICLE_OWNER"
+    ? await dbService.getShiftsHistory(user.id)
+    : await dbService.getShiftsHistory();
+  const vehicles = user.role === "VEHICLE_OWNER"
+    ? await dbService.getVehicles(user.id)
+    : await dbService.getVehicles();
+  
+  const rawDrivers = await dbService.getDrivers();
+  const drivers = user.role === "VEHICLE_OWNER"
+    ? rawDrivers.filter((d) => d.assignedVehicle?.ownerId === user.id)
+    : rawDrivers;
+
+  const redemptions = user.role === "SUPER_ADMIN"
+    ? await dbService.getRedemptions()
+    : [];
 
   // Filter based on period
   const filteredShifts = filterByDateRange(shifts, (s) => s.startTime, period, startStr, endStr);

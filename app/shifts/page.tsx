@@ -7,7 +7,7 @@ import { filterByDateRange, getPeriodDateRange, PeriodType } from "@/lib/date-fi
 export const dynamic = "force-dynamic";
 
 interface ShiftsPageProps {
-  searchParams: Promise<{
+  searchParams?: Promise<{
     period?: string;
     start?: string;
     end?: string;
@@ -16,14 +16,26 @@ interface ShiftsPageProps {
 
 export default async function ShiftsPage({ searchParams }: ShiftsPageProps) {
   const user = await getCurrentUser();
-  if (!user || user.role === "PASSENGER") {
+  if (!user) {
     redirect("/login");
   }
 
-  const params = await searchParams;
-  const period = (params.period || "monthly") as PeriodType;
-  const startStr = params.start;
-  const endStr = params.end;
+  if (user.role !== "SUPER_ADMIN" && user.role !== "OPERATIONS_OFFICER") {
+    redirect("/");
+  }
+
+  // Defensive searchParams Promise resolution
+  let resolvedParams: any = {};
+  try {
+    if (searchParams) {
+      resolvedParams = searchParams instanceof Promise ? await searchParams : searchParams;
+    }
+  } catch (e) {
+    resolvedParams = {};
+  }
+  const period = ((resolvedParams && resolvedParams.period) || "monthly") as PeriodType;
+  const startStr = resolvedParams && resolvedParams.start;
+  const endStr = resolvedParams && resolvedParams.end;
 
   const activeShifts = await dbService.getActiveShifts();
   const vehicles = await dbService.getVehicles();
