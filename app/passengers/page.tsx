@@ -32,7 +32,7 @@ export default async function PassengersPage() {
   });
 
   return (
-    <AppShell title="Passenger Directory" description="Registered Rydex riders and loyalty engagement" user={user}>
+    <AppShell title="Passenger Directory" description="Registered MUVA riders and loyalty engagement" user={user}>
       <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <KpiCard label="Total Passengers" value={totalPassengers > 0 ? totalPassengers : "1,284"} />
         <KpiCard label="Active Commuters" value={totalPassengers > 0 ? Math.max(1, Math.round(totalPassengers * 0.6)) : "742"} delayMs={60} />

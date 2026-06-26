@@ -1,4 +1,4 @@
-const CACHE_NAME = "rydex-cache-v1";
+const CACHE_NAME = "muva-cache-v1";
 const ASSETS_TO_CACHE = [
   "/",
   "/icon.png",

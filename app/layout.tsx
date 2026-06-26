@@ -1,8 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { PWAInstallProvider } from "@/components/pwa-install";
 
 export const metadata: Metadata = {
-  title: "Rydex Mobility V1 — Fleet Insights",
+  title: "MUVA Mobility V1 — Fleet Insights",
   description: "Transport Fleet Operations & Passenger Loyalty Management Platform for CityView Katsina.",
 };
 
@@ -28,7 +29,9 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icon.png" />
       </head>
       <body className="antialiased min-h-screen bg-surface">
-        {children}
+        <PWAInstallProvider>
+          {children}
+        </PWAInstallProvider>
         <script
           dangerouslySetInnerHTML={{
             __html: `

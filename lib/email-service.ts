@@ -2,9 +2,9 @@ import nodemailer from "nodemailer";
 
 export const emailService = {
   async sendDeliveryEmail(passengerName: string, passengerEmail: string, rewardName: string) {
-    const subject = "Congratulations! Your Rydex Reward Has Been Delivered";
+    const subject = "Congratulations! Your MUVA Reward Has Been Delivered";
     
-    // Rydex Branded HTML Template
+    // MUVA Branded HTML Template
     const html = `
       <!DOCTYPE html>
       <html>
@@ -103,28 +103,28 @@ export const emailService = {
       <body>
         <div class="container">
           <div class="header">
-            <h2 class="logo">RYDEX<span>MOBILITY</span></h2>
+            <h2 class="logo">MUVA<span>MOBILITY</span></h2>
           </div>
           
           <div class="content">
             <h1>Hello ${passengerName},</h1>
-            <p>Congratulations! Your requested reward has been successfully approved and delivered by the Rydex Team.</p>
+            <p>Congratulations! Your requested reward has been successfully approved and delivered by the MUVA Team.</p>
             
             <div class="reward-box">
               <div class="reward-label">Your Delivered Reward</div>
               <h3 class="reward-name">${rewardName}</h3>
             </div>
             
-            <p>Thank you for riding with Rydex Mobility. Every trip brings you closer to more rewards!</p>
-            <p>Keep riding with Rydex for affordable, reliable, and rewarding transportation in Katsina State and beyond.</p>
+            <p>Thank you for riding with MUVA Mobility. Every trip brings you closer to more rewards!</p>
+            <p>Keep riding with MUVA for affordable, reliable, and rewarding transportation in Katsina State and beyond.</p>
             <p>We appreciate your loyalty.</p>
             
-            <p style="margin-bottom: 0; font-weight: 600;">The Rydex Mobility Team</p>
+            <p style="margin-bottom: 0; font-weight: 600;">The MUVA Mobility Team</p>
           </div>
           
           <div class="footer">
-            <p>Sent by Rydex Mobility • Katsina State Operations</p>
-            <p><a href="http://www.rydexmobility.com">www.rydexmobility.com</a></p>
+            <p>Sent by MUVA Mobility • Katsina State Operations</p>
+            <p><a href="http://www.muvamobility.com">www.muvamobility.com</a></p>
           </div>
         </div>
       </body>
@@ -135,7 +135,7 @@ export const emailService = {
     const port = parseInt(process.env.SMTP_PORT || "587");
     const user = process.env.SMTP_USER;
     const pass = process.env.SMTP_PASS;
-    const from = process.env.SMTP_FROM || "no-reply@rydexmobility.com";
+    const from = process.env.SMTP_FROM || "no-reply@muvamobility.com";
 
     if (host && user && pass) {
       try {
@@ -169,7 +169,7 @@ export const emailService = {
     console.log(`To: ${name} <${email}>`);
     console.log(`Subject: ${subject}`);
     console.log(`Delivered Item: ${reward}`);
-    console.log(`Body template initialized with Rydex Mobility branding.`);
+    console.log(`Body template initialized with MUVA Mobility branding.`);
     console.log("==============================================================================");
   }
 };

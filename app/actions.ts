@@ -25,10 +25,10 @@ export async function loginAction(prevState: any, formData: FormData) {
 
     // Set cookies for session persistence
     const cookieStore = await cookies();
-    cookieStore.set("rydex-phone", user.phone, { path: "/" });
-    cookieStore.set("rydex-role", user.role, { path: "/" });
-    cookieStore.set("rydex-name", user.name, { path: "/" });
-    cookieStore.set("rydex-id", user.id, { path: "/" });
+    cookieStore.set("muva-phone", user.phone, { path: "/" });
+    cookieStore.set("muva-role", user.role, { path: "/" });
+    cookieStore.set("muva-name", user.name, { path: "/" });
+    cookieStore.set("muva-id", user.id, { path: "/" });
 
     return { success: true, role: user.role };
   } catch (error: any) {
@@ -62,10 +62,10 @@ export async function signupAction(prevState: any, formData: FormData) {
 
     // Set cookies immediately to log them in
     const cookieStore = await cookies();
-    cookieStore.set("rydex-phone", newUser.phone, { path: "/" });
-    cookieStore.set("rydex-role", newUser.role, { path: "/" });
-    cookieStore.set("rydex-name", newUser.name, { path: "/" });
-    cookieStore.set("rydex-id", newUser.id, { path: "/" });
+    cookieStore.set("muva-phone", newUser.phone, { path: "/" });
+    cookieStore.set("muva-role", newUser.role, { path: "/" });
+    cookieStore.set("muva-name", newUser.name, { path: "/" });
+    cookieStore.set("muva-id", newUser.id, { path: "/" });
 
     revalidatePath("/passengers");
 

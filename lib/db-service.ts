@@ -18,7 +18,7 @@ interface FallbackData {
   redemptions: any[];
 }
 
-const DB_FILE = path.join(process.cwd(), "rydex_db_fallback.json");
+const DB_FILE = path.join(process.cwd(), "muva_db_fallback.json");
 
 const SEEDED_NAMES = [
   "Musa Dahiru",
@@ -36,18 +36,7 @@ const SEEDED_NAMES = [
 const getInitialData = (): FallbackData => {
   const driversList = Array.from({ length: 10 }, (_, i) => ({
     id: `drv-${i + 1}`,
-    name: [
-      "Musa Dahiru",
-      "Aisha Umar",
-      "Ibrahim Hassan",
-      "Fatima Bala",
-      "Sani Garba",
-      "Amina Yusuf",
-      "Bello Lawal",
-      "Hauwa Aliyu",
-      "Yusuf Mohammed",
-      "Zainab Sule",
-    ][i],
+    name: SEEDED_NAMES[i],
     phone: `+234 80${i} 555 0${100 + i}`,
     address: `Ward ${i + 1}, Katsina`,
     guarantorName: `Guarantor ${i + 1}`,
@@ -65,7 +54,7 @@ const getInitialData = (): FallbackData => {
     if (i >= 8) ownerId = "u-owner3"; // Owner 3 owns 2 vehicles
 
     return {
-      id: `ryd-kt-${String(i + 1).padStart(3, "0")}`,
+      id: `muv-kt-${String(i + 1).padStart(3, "0")}`,
       vehicleNumber: `KT-${String(i + 1).padStart(3, "0")}`,
       vehicleType: i % 3 === 0 ? "Mini-Bus" : "Keke Napep",
       fuelType: i % 2 === 0 ? "CNG" : "EV",
@@ -83,9 +72,9 @@ const getInitialData = (): FallbackData => {
       id: "u-admin",
       name: "Aminu Okafor",
       phone: "08012345678",
-      email: "admin@rydexmobility.com",
+      email: "admin@muvamobility.com",
       status: "active",
-      password: "Rydex123",
+      password: "Rydex123", // Keep password same for backward compatibility with user testing
       role: "SUPER_ADMIN",
       points: 0,
       createdAt: new Date().toISOString(),
@@ -95,7 +84,7 @@ const getInitialData = (): FallbackData => {
       id: "u-officer",
       name: "Katsina Officer",
       phone: "08022222222",
-      email: "operations@rydexmobility.com",
+      email: "operations@muvamobility.com",
       status: "active",
       password: "Rydex123",
       role: "OPERATIONS_OFFICER",
@@ -107,7 +96,7 @@ const getInitialData = (): FallbackData => {
       id: "u-passenger1",
       name: "Passenger User",
       phone: "08033333333",
-      email: "passenger@rydexmobility.com",
+      email: "passenger@muvamobility.com",
       status: "active",
       password: "Rydex123",
       role: "PASSENGER",
@@ -119,7 +108,7 @@ const getInitialData = (): FallbackData => {
       id: "u-owner1",
       name: "CityView Katsina",
       phone: "08044444444",
-      email: "cityview@rydexmobility.com",
+      email: "cityview@muvamobility.com",
       status: "active",
       password: "Rydex123",
       role: "VEHICLE_OWNER",
@@ -131,7 +120,7 @@ const getInitialData = (): FallbackData => {
       id: "u-owner2",
       name: "Aminu Transport",
       phone: "08055555555",
-      email: "aminu@rydexmobility.com",
+      email: "aminu@muvamobility.com",
       status: "active",
       password: "Rydex123",
       role: "VEHICLE_OWNER",
@@ -143,7 +132,7 @@ const getInitialData = (): FallbackData => {
       id: "u-owner3",
       name: "Northern Mobility Ventures",
       phone: "08066666666",
-      email: "northern@rydexmobility.com",
+      email: "northern@muvamobility.com",
       status: "active",
       password: "Rydex123",
       role: "VEHICLE_OWNER",
@@ -158,7 +147,7 @@ const getInitialData = (): FallbackData => {
   
   for (let i = 0; i < 45; i++) {
     const vehicleIdx = i % 10;
-    const vehicleId = `ryd-kt-${String(vehicleIdx + 1).padStart(3, "0")}`;
+    const vehicleId = `muv-kt-${String(vehicleIdx + 1).padStart(3, "0")}`;
     const driverId = `drv-${vehicleIdx + 1}`;
     
     const dayOffset = Math.floor(i / 2) + 1; 
@@ -199,7 +188,7 @@ const getInitialData = (): FallbackData => {
   shiftsList.push(
     {
       id: "s-active-1",
-      vehicleId: "ryd-kt-001",
+      vehicleId: "muv-kt-001",
       driverId: "drv-1",
       startTime: new Date(nowMs - 3.5 * 3600 * 1000).toISOString(),
       endTime: null,
@@ -212,7 +201,7 @@ const getInitialData = (): FallbackData => {
     },
     {
       id: "s-active-2",
-      vehicleId: "ryd-kt-006",
+      vehicleId: "muv-kt-006",
       driverId: "drv-6",
       startTime: new Date(nowMs - 2 * 3600 * 1000).toISOString(),
       endTime: null,
@@ -230,7 +219,7 @@ const getInitialData = (): FallbackData => {
       id: "b-1",
       batchNumber: "BAT-001",
       codeCount: 30,
-      vehicleId: "ryd-kt-001",
+      vehicleId: "muv-kt-001",
       driverId: "drv-1",
       dateGenerated: new Date(nowMs - 5 * 24 * 3600 * 1000).toISOString(),
     },
@@ -238,7 +227,7 @@ const getInitialData = (): FallbackData => {
       id: "b-2",
       batchNumber: "BAT-002",
       codeCount: 35,
-      vehicleId: "ryd-kt-006",
+      vehicleId: "muv-kt-006",
       driverId: "drv-6",
       dateGenerated: new Date(nowMs - 2 * 24 * 3600 * 1000).toISOString(),
     }
@@ -251,7 +240,7 @@ const getInitialData = (): FallbackData => {
     for (let i = 0; i < 6; i++) {
       result += chars.charAt((idx * 7 + i * 13) % chars.length);
     }
-    return `RYD-${result}`;
+    return `MUV-${result}`;
   };
 
   for (let i = 0; i < 30; i++) {
@@ -261,7 +250,7 @@ const getInitialData = (): FallbackData => {
       code: makeCode(i + 100),
       status: isRedeemed ? "REDEEMED" : "UNUSED",
       batchId: "b-1",
-      vehicleId: "ryd-kt-001",
+      vehicleId: "muv-kt-001",
       driverId: "drv-1",
       dateGenerated: new Date(nowMs - 5 * 24 * 3600 * 1000).toISOString(),
       redeemedDate: isRedeemed ? new Date(nowMs - (i % 4) * 24 * 3600 * 1000).toISOString() : null,
@@ -276,7 +265,7 @@ const getInitialData = (): FallbackData => {
       code: makeCode(i + 200),
       status: isRedeemed ? "REDEEMED" : "UNUSED",
       batchId: "b-2",
-      vehicleId: "ryd-kt-006",
+      vehicleId: "muv-kt-006",
       driverId: "drv-6",
       dateGenerated: new Date(nowMs - 2 * 24 * 3600 * 1000).toISOString(),
       redeemedDate: isRedeemed ? new Date(nowMs - (i % 3) * 24 * 3600 * 1000).toISOString() : null,
@@ -298,7 +287,7 @@ const getInitialData = (): FallbackData => {
     rewardCodes: rewardCodesList,
     redemptions: redemptionsList,
   };
-};;
+};
 
 const loadFallbackData = (): FallbackData => {
   if (fs.existsSync(DB_FILE)) {
@@ -323,8 +312,148 @@ const saveFallbackData = (data: FallbackData) => {
 };
 
 export const dbService = {
+  // Seeding check to verify PostgreSQL contains initial data
+  async ensureSeeded() {
+    if (!isPrismaEnabled()) return;
+    try {
+      const count = await prisma.user.count();
+      if (count > 0) return; // Already seeded
+
+      console.log("[Seeding] PostgreSQL database is empty. Auto-seeding MUVA data...");
+      const data = getInitialData();
+
+      // Seed Users
+      for (const u of data.users) {
+        await prisma.user.create({
+          data: {
+            id: u.id,
+            name: u.name,
+            phone: u.phone,
+            email: u.email,
+            status: u.status,
+            password: u.password,
+            role: u.role,
+            points: u.points,
+            createdAt: new Date(u.createdAt),
+            updatedAt: new Date(u.updatedAt),
+          },
+        });
+      }
+
+      // Seed Drivers
+      for (const d of data.drivers) {
+        await prisma.driver.create({
+          data: {
+            id: d.id,
+            name: d.name,
+            phone: d.phone,
+            address: d.address,
+            guarantorName: d.guarantorName,
+            guarantorPhone: d.guarantorPhone,
+            status: d.status,
+            createdAt: new Date(d.createdAt),
+            updatedAt: new Date(d.updatedAt),
+          },
+        });
+      }
+
+      // Seed Vehicles
+      for (const v of data.vehicles) {
+        await prisma.vehicle.create({
+          data: {
+            id: v.id,
+            vehicleNumber: v.vehicleNumber,
+            vehicleType: v.vehicleType,
+            fuelType: v.fuelType,
+            plateNumber: v.plateNumber,
+            status: v.status,
+            assignedDriverId: v.assignedDriverId,
+            ownerId: v.ownerId,
+            createdAt: new Date(v.createdAt),
+            updatedAt: new Date(v.updatedAt),
+          },
+        });
+      }
+
+      // Seed Shifts
+      for (const s of data.shifts) {
+        await prisma.shift.create({
+          data: {
+            id: s.id,
+            vehicleId: s.vehicleId,
+            driverId: s.driverId,
+            startTime: new Date(s.startTime),
+            endTime: s.endTime ? new Date(s.endTime) : null,
+            startOdometer: s.startOdometer,
+            endOdometer: s.endOdometer,
+            revenue: s.revenue,
+            hoursWorked: s.hoursWorked,
+            minutesWorked: s.minutesWorked,
+            distanceCovered: s.distanceCovered,
+            revenuePerHour: s.revenuePerHour,
+            revenuePerKm: s.revenuePerKm,
+            status: s.status,
+            createdAt: new Date(s.createdAt),
+            updatedAt: new Date(s.updatedAt),
+          },
+        });
+      }
+
+      // Seed Batches
+      for (const b of data.batches) {
+        await prisma.codeBatch.create({
+          data: {
+            id: b.id,
+            batchNumber: b.batchNumber,
+            codeCount: b.codeCount,
+            vehicleId: b.vehicleId,
+            driverId: b.driverId,
+            dateGenerated: new Date(b.dateGenerated),
+          },
+        });
+      }
+
+      // Seed Reward Codes
+      for (const c of data.rewardCodes) {
+        await prisma.rewardCode.create({
+          data: {
+            id: c.id,
+            code: c.code,
+            status: c.status,
+            batchId: c.batchId,
+            vehicleId: c.vehicleId,
+            driverId: c.driverId,
+            dateGenerated: new Date(c.dateGenerated),
+            redeemedDate: c.redeemedDate ? new Date(c.redeemedDate) : null,
+            redeemedById: c.redeemedById,
+          },
+        });
+      }
+
+      // Seed Redemptions
+      for (const r of data.redemptions) {
+        await prisma.redemptionRequest.create({
+          data: {
+            id: r.id,
+            passengerId: r.passengerId,
+            rewardRequested: r.rewardRequested,
+            pointsUsed: r.pointsUsed,
+            status: r.status,
+            requestedAt: new Date(r.requestedAt),
+            processedAt: r.processedAt ? new Date(r.processedAt) : null,
+          },
+        });
+      }
+
+      console.log("[Seeding] PostgreSQL database seeded successfully!");
+    } catch (err) {
+      console.error("[Seeding] Failed to auto-seed PostgreSQL:", err);
+    }
+  },
+
   // Users
   async getUsers() {
+    await this.ensureSeeded();
     if (isPrismaEnabled()) {
       return await prisma.user.findMany({ orderBy: { createdAt: "desc" } });
     }
@@ -332,6 +461,7 @@ export const dbService = {
   },
 
   async getUserByPhone(phone: string) {
+    await this.ensureSeeded();
     if (isPrismaEnabled()) {
       return await prisma.user.findUnique({ where: { phone } });
     }
@@ -339,6 +469,7 @@ export const dbService = {
   },
 
   async getUserByPhoneOrEmail(identifier: string) {
+    await this.ensureSeeded();
     const cleanId = identifier.trim().toLowerCase();
     if (isPrismaEnabled()) {
       return await prisma.user.findFirst({
@@ -437,6 +568,7 @@ export const dbService = {
 
   // Vehicles
   async getVehicles(ownerId?: string) {
+    await this.ensureSeeded();
     if (isPrismaEnabled()) {
       const whereClause = ownerId ? { ownerId } : {};
       return await prisma.vehicle.findMany({
@@ -458,6 +590,7 @@ export const dbService = {
   },
 
   async getVehicleById(id: string) {
+    await this.ensureSeeded();
     if (isPrismaEnabled()) {
       return await prisma.vehicle.findUnique({
         where: { id },
@@ -554,6 +687,7 @@ export const dbService = {
 
   // Drivers
   async getDrivers() {
+    await this.ensureSeeded();
     if (isPrismaEnabled()) {
       return await prisma.driver.findMany({
         include: { assignedVehicle: true },
@@ -568,6 +702,7 @@ export const dbService = {
   },
 
   async getDriverById(id: string) {
+    await this.ensureSeeded();
     if (isPrismaEnabled()) {
       return await prisma.driver.findUnique({
         where: { id },
@@ -652,6 +787,7 @@ export const dbService = {
 
   // Shifts
   async getActiveShifts() {
+    await this.ensureSeeded();
     if (isPrismaEnabled()) {
       return await prisma.shift.findMany({
         where: { status: { in: ["ACTIVE", "LOW_PERF"] } },
@@ -669,6 +805,7 @@ export const dbService = {
   },
 
   async getShiftsHistory(ownerId?: string) {
+    await this.ensureSeeded();
     if (isPrismaEnabled()) {
       const filter = ownerId ? { vehicle: { ownerId } } : {};
       return await prisma.shift.findMany({
@@ -796,6 +933,7 @@ export const dbService = {
 
   // Code Batches
   async getBatches() {
+    await this.ensureSeeded();
     if (isPrismaEnabled()) {
       return await prisma.codeBatch.findMany({
         include: { vehicle: true, driver: true, codes: true },
@@ -821,7 +959,7 @@ export const dbService = {
       for (let i = 0; i < 6; i++) {
         result += chars.charAt(Math.floor(Math.random() * chars.length));
       }
-      return `RYD-${result}`;
+      return `MUV-${result}`;
     };
 
     if (isPrismaEnabled()) {
@@ -880,6 +1018,7 @@ export const dbService = {
 
   // Reward Codes & Redemptions
   async getRewardCodes() {
+    await this.ensureSeeded();
     if (isPrismaEnabled()) {
       return await prisma.rewardCode.findMany({ orderBy: { dateGenerated: "desc" } });
     }
@@ -934,6 +1073,7 @@ export const dbService = {
   },
 
   async getRedemptions() {
+    await this.ensureSeeded();
     if (isPrismaEnabled()) {
       return await prisma.redemptionRequest.findMany({
         include: { passenger: true },

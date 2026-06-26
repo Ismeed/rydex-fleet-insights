@@ -30,10 +30,10 @@ export default function SignupPage() {
 
         <div className="flex items-center gap-3 relative z-10">
           <div className="size-10 bg-brand rounded-lg grid place-items-center font-bold text-xl text-brand-foreground">
-            R
+            M
           </div>
           <div className="flex flex-col">
-            <span className="font-bold tracking-tight text-xl leading-none">RYDEX</span>
+            <span className="font-bold tracking-tight text-xl leading-none">MUVA</span>
             <span className="text-[10px] uppercase tracking-widest text-white/40 mt-1">Mobility OS</span>
           </div>
         </div>
@@ -46,12 +46,12 @@ export default function SignupPage() {
             Earn rewards while riding.
           </h2>
           <p className="text-sm text-white/60 leading-relaxed">
-            Register your Rydex passenger account, collect reward codes on your commutes, and redeem them for free airtime or mobile data packages.
+            Register your MUVA passenger account, collect reward codes on your commutes, and redeem them for free airtime or mobile data packages.
           </p>
         </div>
 
         <div className="text-xs text-white/40 relative z-10">
-          © 2026 Rydex Mobility. Katsina State Operations.
+          © 2026 MUVA Mobility. Katsina State Operations.
         </div>
       </div>
 
@@ -61,15 +61,15 @@ export default function SignupPage() {
           <div className="space-y-3">
             <div className="flex md:hidden items-center gap-3">
               <div className="size-9 bg-brand rounded-md grid place-items-center font-bold text-lg text-brand-foreground">
-                R
+                M
               </div>
-              <span className="font-bold tracking-tight text-lg leading-none">RYDEX</span>
+              <span className="font-bold tracking-tight text-lg leading-none">MUVA</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
               Register Account
             </h1>
             <p className="text-sm text-muted-foreground">
-              Sign up as a Rydex passenger to begin earning points.
+              Sign up as a MUVA passenger to begin earning points.
             </p>
           </div>
 

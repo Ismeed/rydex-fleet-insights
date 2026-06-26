@@ -95,10 +95,10 @@ export function PrintableSlips({ codes }: PrintableSlipsProps) {
             >
               <div style={{ width: "100%" }}>
                 <div style={{ fontWeight: 800, fontSize: "9px", color: "#15803D", letterSpacing: "-0.02em", lineHeight: "1" }}>
-                  RYDEX MOBILITY
+                  MUVA MOBILITY
                 </div>
                 <div style={{ fontSize: "5px", color: "#374151", fontWeight: 600, marginTop: "2px", lineHeight: "1.1" }}>
-                  Thank You For Riding With Rydex
+                  Thank You For Riding With MUVA
                 </div>
               </div>
 
@@ -110,12 +110,12 @@ export function PrintableSlips({ codes }: PrintableSlipsProps) {
               </div>
 
               <div style={{ width: "100%" }}>
-                <div style={{ fontWeight: 700, fontSize: "5.5px", color: "#15803D" }}>www.rydexmobility.com</div>
+                <div style={{ fontWeight: 700, fontSize: "5.5px", color: "#15803D" }}>www.muvamobility.com</div>
                 <div style={{ fontSize: "4px", color: "#4B5563", fontWeight: 600, lineHeight: "1.1", marginTop: "1px" }}>
                   Record this code and earn rewards.
                 </div>
                 <div style={{ fontSize: "3.2px", color: "#9CA3AF", lineHeight: "1", marginTop: "1px" }}>
-                  Keep riding with Rydex and enjoy affordable mobility.
+                  Keep riding with MUVA and enjoy affordable mobility.
                 </div>
               </div>
             </div>

@@ -124,7 +124,7 @@ export function DashboardClient({
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={revenue30d} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
                 <defs>
-                  <linearGradient id="rydexRev" x1="0" y1="0" x2="0" y2="1">
+                  <linearGradient id="muvaRev" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="#0F8A5F" stopOpacity={0.25} />
                     <stop offset="100%" stopColor="#0F8A5F" stopOpacity={0} />
                   </linearGradient>
@@ -156,7 +156,7 @@ export function DashboardClient({
                   dataKey="revenue"
                   stroke="#0F8A5F"
                   strokeWidth={2}
-                  fill="url(#rydexRev)"
+                  fill="url(#muvaRev)"
                 />
               </AreaChart>
             </ResponsiveContainer>

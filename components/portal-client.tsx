@@ -23,6 +23,7 @@ export function PortalClient({ user, redemptions: initialRedemptions }: PortalCl
   const [isPending, startTransition] = useTransition();
   const [codeInputValue, setCodeInputValue] = useState("");
   const [feedback, setFeedback] = useState<ValidationFeedback | null>(null);
+  const [activeTab, setActiveTab] = useState<"ALL" | "AIRTIME" | "DATA">("ALL");
 
   // Progress Bar thresholds
   const getNextGoal = (pts: number) => {
@@ -94,17 +95,21 @@ export function PortalClient({ user, redemptions: initialRedemptions }: PortalCl
   };
 
   const REWARDS = [
-    { label: "100MB Data", cost: 100, desc: "Fast mobile data topup" },
-    { label: "₦100 Airtime", cost: 100, desc: "Call credit for any network" },
-    { label: "500MB Data", cost: 300, desc: "Medium data package" },
-    { label: "1GB Data", cost: 600, desc: "Premium mobile data volume" },
+    { label: "100MB Data", cost: 100, desc: "Fast mobile data topup", type: "DATA" as const },
+    { label: "₦100 Airtime", cost: 100, desc: "Call credit for any network", type: "AIRTIME" as const },
+    { label: "500MB Data", cost: 300, desc: "Medium data package", type: "DATA" as const },
+    { label: "1GB Data", cost: 600, desc: "Premium mobile data volume", type: "DATA" as const },
   ];
+
+  const filteredRewards = REWARDS.filter(
+    (r) => activeTab === "ALL" || r.type === activeTab
+  );
 
   return (
     <AppShell title="Commuter Portal" description="Enter ride codes and track your points" user={user}>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-up">
         {/* Points Summary & Progress Bar */}
-        <div className="lg:col-span-2 bg-white border border-border rounded-xl p-4 sm:p-6 shadow-sm space-y-6 flex flex-col justify-between">
+        <div className="lg:col-span-2 bg-white border border-border rounded-xl p-5 sm:p-6 shadow-sm space-y-6 flex flex-col justify-between">
           <div className="space-y-4">
             <div className="flex items-center justify-between gap-3">
               <h3 className="font-bold text-base flex items-center gap-2">
@@ -116,8 +121,8 @@ export function PortalClient({ user, redemptions: initialRedemptions }: PortalCl
             </div>
  
             {/* Gamified progress bar */}
-            <div className="space-y-2">
-              <div className="flex justify-between text-[10px] sm:text-xs font-semibold flex-wrap gap-1">
+            <div className="space-y-4">
+              <div className="flex justify-between text-[11px] sm:text-xs font-semibold flex-wrap gap-1">
                 <span className="text-muted-foreground">{points} / {currentGoal.goal} pts</span>
                 {currentGoal.diff > 0 ? (
                   <span className="text-brand font-medium">
@@ -127,37 +132,83 @@ export function PortalClient({ user, redemptions: initialRedemptions }: PortalCl
                   <span className="text-brand font-medium">Top Tier Commuter!</span>
                 )}
               </div>
-              <div className="w-full bg-surface border border-border h-3.5 sm:h-4 rounded-full overflow-hidden">
-                <div
-                  className="bg-brand h-full transition-all duration-500 rounded-full"
-                  style={{ width: `${percentComplete}%` }}
-                />
+              <div className="relative pt-1">
+                <div className="w-full bg-surface border border-border h-4 rounded-full overflow-hidden">
+                  <div
+                    className="bg-brand h-full transition-all duration-500 rounded-full"
+                    style={{ width: `${percentComplete}%` }}
+                  />
+                </div>
+                {/* Milestone Tickmarks */}
+                <div className="flex justify-between text-[9px] font-bold text-muted-foreground mt-2 px-1 relative">
+                  <span className={cn(points >= 100 ? "text-brand" : "")}>100 pts (100MB)</span>
+                  <span className={cn(points >= 300 ? "text-brand" : "")}>300 pts (500MB)</span>
+                  <span className={cn(points >= 600 ? "text-brand" : "")}>600 pts (1GB)</span>
+                </div>
               </div>
             </div>
           </div>
  
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 pt-6 border-t border-border mt-6">
-            {REWARDS.map((r) => (
-              <button
-                key={r.label}
-                onClick={() => handleRewardRedeem(r.label, r.cost)}
-                disabled={points < r.cost || isPending}
-                className={cn(
-                  "p-2.5 sm:p-4 rounded-xl border text-center transition-all flex flex-col justify-between items-center group cursor-pointer h-auto min-h-[96px] sm:h-28 box-border",
-                  points >= r.cost
-                    ? "border-brand/20 bg-brand-soft/10 hover:bg-brand/5 hover:border-brand/40"
-                    : "border-border bg-surface/50 opacity-40 cursor-not-allowed"
-                )}
-              >
-                <Gift className={cn("size-4 sm:size-5 mb-1.5 sm:mb-2 transition-transform group-hover:scale-110", points >= r.cost ? "text-brand" : "text-muted-foreground")} />
-                <div>
-                  <p className="text-[11px] sm:text-xs font-bold text-foreground truncate max-w-full">{r.label}</p>
-                  <p className="text-[9px] sm:text-[10px] text-muted-foreground font-mono mt-0.5 sm:mt-1 font-semibold">
-                    {r.cost} pts
-                  </p>
+          {/* Airtime vs Data Selection Tabs and Cards */}
+          <div className="space-y-4 pt-6 border-t border-border mt-6">
+            <div className="flex items-center gap-1 bg-surface p-1 rounded-lg border border-border max-w-sm">
+              {(["ALL", "AIRTIME", "DATA"] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={cn(
+                    "flex-1 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer uppercase",
+                    activeTab === tab
+                      ? "bg-white text-brand shadow-sm border border-border/10"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {tab === "ALL" ? "All" : tab === "AIRTIME" ? "Airtime" : "Data"}
+                </button>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {filteredRewards.map((r) => (
+                <div
+                  key={r.label}
+                  className={cn(
+                    "p-4 rounded-xl border flex items-center justify-between gap-4 transition-all",
+                    points >= r.cost
+                      ? "border-brand/20 bg-brand-soft/10"
+                      : "border-border bg-surface/50 opacity-60"
+                  )}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className={cn(
+                      "size-10 rounded-lg flex items-center justify-center shrink-0",
+                      points >= r.cost ? "bg-brand/10 text-brand" : "bg-muted text-muted-foreground"
+                    )}>
+                      <Gift className="size-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-foreground truncate">{r.label}</p>
+                      <p className="text-[10px] text-muted-foreground truncate">{r.desc}</p>
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-xs font-bold font-mono text-brand mb-1.5">{r.cost} pts</p>
+                    <button
+                      onClick={() => handleRewardRedeem(r.label, r.cost)}
+                      disabled={points < r.cost || isPending}
+                      className={cn(
+                        "px-3 py-1 rounded text-[10px] font-bold uppercase transition-all cursor-pointer",
+                        points >= r.cost
+                          ? "bg-brand text-brand-foreground hover:bg-brand/90"
+                          : "bg-surface border border-border text-muted-foreground cursor-not-allowed"
+                      )}
+                    >
+                      Redeem
+                    </button>
+                  </div>
                 </div>
-              </button>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
 
@@ -169,7 +220,7 @@ export function PortalClient({ user, redemptions: initialRedemptions }: PortalCl
                 <QrCode className="size-5 text-brand" /> Enter Commute Code
               </h3>
               <p className="text-xs text-muted-foreground">
-                Enter the unique code printed on your Rydex receipt/ticket to earn 10 points
+                Enter the unique code printed on your MUVA receipt/ticket to earn 10 points
               </p>
             </div>
 
@@ -205,7 +256,7 @@ export function PortalClient({ user, redemptions: initialRedemptions }: PortalCl
                   type="text"
                   value={codeInputValue}
                   onChange={(e) => setCodeInputValue(e.target.value)}
-                  placeholder="e.g. RYD-7K4P9M"
+                  placeholder="e.g. MUV-7K4P9M"
                   required
                   disabled={isPending}
                   className="w-full px-3 py-2 bg-surface border border-border rounded-md text-sm font-mono focus:ring-1 focus:ring-brand outline-none uppercase"
@@ -229,7 +280,9 @@ export function PortalClient({ user, redemptions: initialRedemptions }: PortalCl
           <h3 className="font-bold text-base">Redemption History</h3>
           <p className="text-xs text-muted-foreground mt-0.5">Track status of your requested airtime and data rewards</p>
         </div>
-        <div className="overflow-x-auto">
+
+        {/* Desktop Table View */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-sm border-collapse">
             <thead>
               <tr className="bg-surface text-[10px] font-bold text-muted-foreground uppercase tracking-widest border-b border-border">
@@ -275,6 +328,43 @@ export function PortalClient({ user, redemptions: initialRedemptions }: PortalCl
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile List View */}
+        <div className="block md:hidden divide-y divide-border">
+          {redemptions.length > 0 ? (
+            redemptions.map((r) => (
+              <div key={r.id} className="p-4 space-y-2 hover:bg-surface/30 transition-colors">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-sm text-foreground">{r.rewardRequested}</span>
+                  <span
+                    className={cn(
+                      "px-2 py-0.5 text-[9px] font-bold rounded uppercase tracking-wider",
+                      r.status === "PENDING_APPROVAL"
+                        ? "bg-warn-soft text-warn"
+                        : "bg-brand/10 text-brand"
+                    )}
+                  >
+                    {r.status === "PENDING_APPROVAL" ? "Pending" : "Delivered"}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span>{r.pointsUsed} pts exchanged</span>
+                  <span>
+                    {new Date(r.requestedAt).toLocaleDateString("en-NG", {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                    })}
+                  </span>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="p-6 text-center text-xs text-muted-foreground">
+              You haven't requested any rewards yet. Keep riding to collect points!
+            </div>
+          )}
         </div>
       </section>
     </AppShell>

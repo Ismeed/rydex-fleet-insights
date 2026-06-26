@@ -70,7 +70,7 @@ export function ReportsClient({
       s.hoursWorked !== null ? `${s.hoursWorked}h ${s.minutesWorked}m` : "Active",
       s.status,
     ]);
-    downloadCSV("rydex_daily_ops_report.csv", headers, rows);
+    downloadCSV("muva_daily_ops_report.csv", headers, rows);
   };
 
   const exportVehicles = (format: string) => {
@@ -87,7 +87,7 @@ export function ReportsClient({
       v.assignedDriver?.name || "None",
       v.status,
     ]);
-    downloadCSV("rydex_vehicles_report.csv", headers, rows);
+    downloadCSV("muva_vehicles_report.csv", headers, rows);
   };
 
   const exportDrivers = (format: string) => {
@@ -113,7 +113,7 @@ export function ReportsClient({
       d.status,
       d.avgPerDay,
     ]);
-    downloadCSV("rydex_drivers_report.csv", headers, rows);
+    downloadCSV("muva_drivers_report.csv", headers, rows);
   };
 
   const exportRewards = (format: string) => {
@@ -130,7 +130,7 @@ export function ReportsClient({
       r.status,
       r.requestedAt,
     ]);
-    downloadCSV("rydex_redemptions_report.csv", headers, rows);
+    downloadCSV("muva_redemptions_report.csv", headers, rows);
   };
 
   const REPORTS = [

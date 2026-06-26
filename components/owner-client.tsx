@@ -44,7 +44,7 @@ export function OwnerClient({
   return (
     <AppShell
       title="Investor Dashboard"
-      description="Rydex Mobility Partner • Owned fleet performance"
+      description="MUVA Mobility Partner • Owned fleet performance"
       user={user}
     >
       {/* KPI grid */}
@@ -98,7 +98,7 @@ export function OwnerClient({
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={revenue30d} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
                 <defs>
-                  <linearGradient id="rydexOwnerRev" x1="0" y1="0" x2="0" y2="1">
+                  <linearGradient id="muvaOwnerRev" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="#0F8A5F" stopOpacity={0.25} />
                     <stop offset="100%" stopColor="#0F8A5F" stopOpacity={0} />
                   </linearGradient>
@@ -130,7 +130,7 @@ export function OwnerClient({
                   dataKey="revenue"
                   stroke="#0F8A5F"
                   strokeWidth={2}
-                  fill="url(#rydexOwnerRev)"
+                  fill="url(#muvaOwnerRev)"
                 />
               </AreaChart>
             </ResponsiveContainer>

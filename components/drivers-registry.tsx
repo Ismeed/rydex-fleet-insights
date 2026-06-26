@@ -375,7 +375,7 @@ export function DriversRegistry({ initialDrivers }: DriversRegistryProps) {
                     )}
                   </div>
                   <div>
-                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Rydex Performance (Avg/Day)</span>
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">MUVA Performance (Avg/Day)</span>
                     <span className="text-sm font-mono font-bold text-foreground block mt-0.5">{compactNaira(selectedDriver.avgPerDay)}</span>
                   </div>
                 </div>

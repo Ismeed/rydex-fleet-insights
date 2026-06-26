@@ -458,7 +458,7 @@ export function OwnersRegistry({ initialOwners }: OwnersRegistryProps) {
                     <input
                       type="email"
                       name="email"
-                      placeholder="e.g. cityview@rydexmobility.com"
+                      placeholder="e.g. cityview@muvamobility.com"
                       required
                       className="w-full px-3 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand"
                       value={formData.email}

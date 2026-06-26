@@ -36,10 +36,10 @@ export default function LoginPage() {
         
         <div className="flex items-center gap-3 relative z-10">
           <div className="size-10 bg-brand rounded-lg grid place-items-center font-bold text-xl text-brand-foreground">
-            R
+            M
           </div>
           <div className="flex flex-col">
-            <span className="font-bold tracking-tight text-xl leading-none">RYDEX</span>
+            <span className="font-bold tracking-tight text-xl leading-none">MUVA</span>
             <span className="text-[10px] uppercase tracking-widest text-white/40 mt-1">Mobility OS</span>
           </div>
         </div>
@@ -57,7 +57,7 @@ export default function LoginPage() {
         </div>
 
         <div className="text-xs text-white/40 relative z-10">
-          © 2026 Rydex Mobility. Katsina State Operations.
+          © 2026 MUVA Mobility. Katsina State Operations.
         </div>
       </div>
 
@@ -67,15 +67,15 @@ export default function LoginPage() {
           <div className="space-y-3">
             <div className="flex md:hidden items-center gap-3">
               <div className="size-9 bg-brand rounded-md grid place-items-center font-bold text-lg text-brand-foreground">
-                R
+                M
               </div>
-              <span className="font-bold tracking-tight text-lg leading-none">RYDEX</span>
+              <span className="font-bold tracking-tight text-lg leading-none">MUVA</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
               Sign In
             </h1>
             <p className="text-sm text-muted-foreground">
-              Enter your credentials to access the Rydex workspace.
+              Enter your credentials to access the MUVA workspace.
             </p>
           </div>
 
@@ -94,7 +94,7 @@ export default function LoginPage() {
                 id="phone"
                 name="phone"
                 type="text"
-                placeholder="e.g. cityview@rydexmobility.com or 08012345678"
+                placeholder="e.g. cityview@muvamobility.com or 08012345678"
                 required
                 className="w-full px-3 py-2 bg-surface border border-border rounded-md text-sm font-mono focus:ring-1 focus:ring-brand focus:border-brand outline-none transition-all"
               />
@@ -140,19 +140,19 @@ export default function LoginPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
               <div className="bg-white p-2 rounded border border-border font-mono">
                 <p className="font-bold text-brand">Super Admin</p>
-                <p className="truncate">admin@rydexmobility.com</p>
+                <p className="truncate">admin@muvamobility.com</p>
               </div>
               <div className="bg-white p-2 rounded border border-border font-mono">
                 <p className="font-bold text-brand">Ops Officer</p>
-                <p className="truncate">operations@rydexmobility.com</p>
+                <p className="truncate">operations@muvamobility.com</p>
               </div>
               <div className="bg-white p-2 rounded border border-border font-mono">
                 <p className="font-bold text-brand">Owner (CityView)</p>
-                <p className="truncate">cityview@rydexmobility.com</p>
+                <p className="truncate">cityview@muvamobility.com</p>
               </div>
               <div className="bg-white p-2 rounded border border-border font-mono">
                 <p className="font-bold text-brand">Passenger</p>
-                <p className="truncate">passenger@rydexmobility.com</p>
+                <p className="truncate">passenger@muvamobility.com</p>
               </div>
             </div>
           </div>

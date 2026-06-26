@@ -18,8 +18,10 @@ import {
   Menu,
   X,
   Building,
+  Download,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { usePWAInstall } from "@/components/pwa-install";
 
 const PRIMARY_NAV = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -54,11 +56,12 @@ export function AppShell({
   description?: string;
   actions?: ReactNode;
   children: ReactNode;
-  user?: { name: string; role: string };
-}) {
+  }) {
   const pathname = usePathname();
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { isInstallable, install } = usePWAInstall();
+  const [showMobilePrompt, setShowMobilePrompt] = useState(true);
 
   const isActive = (href: string) => {
     if (href === "/") {
@@ -69,10 +72,10 @@ export function AppShell({
 
   const handleSignOut = () => {
     // Clear auth cookies and redirect
-    document.cookie = "rydex-role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
-    document.cookie = "rydex-phone=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
-    document.cookie = "rydex-name=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
-    document.cookie = "rydex-id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+    document.cookie = "muva-role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+    document.cookie = "muva-phone=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+    document.cookie = "muva-name=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+    document.cookie = "muva-id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
     router.push("/login");
   };
 
@@ -86,10 +89,10 @@ export function AppShell({
       <aside className="hidden lg:flex w-64 bg-sidebar text-sidebar-foreground flex-col fixed top-0 bottom-0 left-0 h-screen shrink-0 border-r border-sidebar-border z-20">
         <div className="p-6 flex items-center gap-3">
           <div className="size-9 bg-brand rounded-md grid place-items-center font-bold text-lg text-brand-foreground">
-            R
+            M
           </div>
           <div className="flex flex-col min-w-0">
-            <span className="font-bold tracking-tight text-lg leading-none">RYDEX</span>
+            <span className="font-bold tracking-tight text-lg leading-none">MUVA</span>
             <span className="text-[10px] uppercase tracking-widest text-white/40 mt-1">Mobility OS</span>
           </div>
         </div>
@@ -176,6 +179,18 @@ export function AppShell({
               </Link>
             </>
           )}
+          
+          {isInstallable && (
+            <div className="px-3 pt-3 border-t border-white/5 mt-3">
+              <button
+                onClick={() => install()}
+                className="w-full flex items-center gap-3 px-3 py-2 bg-brand/10 border border-brand/20 text-brand-accent rounded-md text-xs font-semibold hover:bg-brand/25 transition-all cursor-pointer"
+              >
+                <Download className="size-3.5 shrink-0 animate-bounce" />
+                <span className="truncate">Install MUVA App</span>
+              </button>
+            </div>
+          )}
         </nav>
 
         <div className="p-4 border-t border-white/5 space-y-2">
@@ -185,7 +200,7 @@ export function AppShell({
             </div>
             <div className="flex flex-col min-w-0">
               <span className="text-sm font-medium leading-tight truncate text-white">
-                {user?.name || "Rydex User"}
+                {user?.name || "MUVA User"}
               </span>
               <span className="text-[10px] text-white/45 truncate">
                 {user?.role === "SUPER_ADMIN"
@@ -212,9 +227,9 @@ export function AppShell({
       <header className="lg:hidden w-full h-16 bg-sidebar text-sidebar-foreground flex items-center justify-between px-4 fixed top-0 left-0 right-0 z-40 border-b border-sidebar-border">
         <div className="flex items-center gap-2">
           <div className="size-8 bg-brand rounded grid place-items-center font-bold text-base text-brand-foreground">
-            R
+            M
           </div>
-          <span className="font-bold tracking-tight text-base">RYDEX</span>
+          <span className="font-bold tracking-tight text-base">MUVA</span>
         </div>
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -310,7 +325,7 @@ export function AppShell({
               </div>
               <div className="flex flex-col min-w-0">
                 <span className="text-sm font-medium leading-tight truncate text-white">
-                  {user?.name || "Rydex User"}
+                  {user?.name || "MUVA User"}
                 </span>
                 <span className="text-[10px] text-white/40 truncate">
                   {user?.role === "SUPER_ADMIN" ? "Super Admin" : "Operations Officer"}
@@ -373,6 +388,38 @@ export function AppShell({
         {/* Page Content wrapper */}
         <main className="flex-1 p-4 lg:p-8 space-y-6 lg:space-y-8 overflow-y-auto print:p-0 print:m-0">{children}</main>
       </div>
+
+      {/* Mobile Install Prompt (Slide-up Banner) */}
+      {isInstallable && showMobilePrompt && (
+        <div className="lg:hidden fixed bottom-4 left-4 right-4 z-50 bg-sidebar text-sidebar-foreground border border-sidebar-border rounded-xl p-4 shadow-xl flex items-center justify-between gap-4 animate-fade-up">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="size-9 bg-brand rounded-md grid place-items-center font-bold text-base text-brand-foreground shrink-0">
+              M
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-bold leading-none text-white">Install MUVA App</p>
+              <p className="text-[10px] text-white/50 truncate mt-1">Install MUVA for a faster experience.</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => {
+                install();
+                setShowMobilePrompt(false);
+              }}
+              className="px-3 py-1.5 bg-brand text-brand-foreground text-xs font-bold rounded-md hover:bg-brand/90 transition-colors cursor-pointer"
+            >
+              Install
+            </button>
+            <button
+              onClick={() => setShowMobilePrompt(false)}
+              className="p-1.5 hover:bg-white/5 rounded text-white/40 hover:text-white cursor-pointer"
+            >
+              <X className="size-4" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

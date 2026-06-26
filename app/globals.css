@@ -3,7 +3,7 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Rydex Mobility — Design System
+ * MUVA Mobility — Design System
  * Mission-control dashboard for fleet operations.
  * Palette: deep emerald primary, charcoal sidebar, white surfaces.
  * All colors authored in oklch.
@@ -69,7 +69,7 @@
 :root {
   --radius: 0.75rem;
 
-  /* Rydex brand tokens (Mission Control direction) */
+  /* MUVA brand tokens (Mission Control direction) */
   --brand: oklch(0.56 0.12 158);            /* #0F8A5F deep emerald */
   --brand-foreground: oklch(0.99 0 0);
   --brand-accent: oklch(0.74 0.17 148);     /* #22C55E bright accent */
@@ -82,7 +82,7 @@
   --danger: oklch(0.62 0.22 27);            /* #EF4444 */
   --danger-soft: oklch(0.96 0.04 25);
 
-  /* Shadcn semantic tokens mapped to Rydex */
+  /* Shadcn semantic tokens mapped to MUVA */
   --background: oklch(1 0 0);
   --foreground: oklch(0.21 0.03 264);
   --card: oklch(1 0 0);
@@ -164,18 +164,18 @@
 }
 
 /* Mission-control animations */
-@keyframes rydex-fade-up {
+@keyframes muva-fade-up {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
-@keyframes rydex-grow-bar {
+@keyframes muva-grow-bar {
   from { height: 0; }
   to { height: var(--final-height, 100%); }
 }
 
 @utility animate-fade-up {
-  animation: rydex-fade-up 600ms var(--ease-out-expo) both;
+  animation: muva-fade-up 600ms var(--ease-out-expo) both;
 }
 @utility animate-grow-bar {
-  animation: rydex-grow-bar 800ms var(--ease-out-expo) both;
+  animation: muva-grow-bar 800ms var(--ease-out-expo) both;
 }

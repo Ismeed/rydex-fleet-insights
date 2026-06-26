@@ -3,10 +3,10 @@ import { dbService } from "./db-service";
 
 export async function getCurrentUser() {
   const cookieStore = await cookies();
-  const phone = cookieStore.get("rydex-phone")?.value;
-  const role = cookieStore.get("rydex-role")?.value;
-  const name = cookieStore.get("rydex-name")?.value;
-  const id = cookieStore.get("rydex-id")?.value;
+  const phone = cookieStore.get("muva-phone")?.value;
+  const role = cookieStore.get("muva-role")?.value;
+  const name = cookieStore.get("muva-name")?.value;
+  const id = cookieStore.get("muva-id")?.value;
 
   if (!phone || !role || !name || !id) {
     return null;
