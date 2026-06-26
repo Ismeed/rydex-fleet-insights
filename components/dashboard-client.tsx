@@ -12,6 +12,7 @@ import {
 } from "recharts";
 import { AppShell } from "@/components/app-shell";
 import { KpiCard } from "@/components/kpi-card";
+import { FilterBar } from "@/components/filter-bar";
 import { compactNaira, naira } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { useState, useTransition } from "react";
@@ -37,6 +38,7 @@ interface DashboardClientProps {
   pendingRedemptions: any[];
   topVehicles: any[];
   activeShifts: any[];
+  period: string;
 }
 
 export function DashboardClient({
@@ -46,6 +48,7 @@ export function DashboardClient({
   pendingRedemptions: initialPending,
   topVehicles,
   activeShifts,
+  period,
 }: DashboardClientProps) {
   const [pending, setPending] = useState(initialPending);
   const [isPending, startTransition] = useTransition();
@@ -68,10 +71,26 @@ export function DashboardClient({
       description="CityView CNG Automobile Synergy • Live operations"
       user={user}
     >
+      <FilterBar />
+
       {/* KPI grid */}
       <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <KpiCard
-          label="Today's Revenue"
+          label={
+            period === "daily"
+              ? "Today's Revenue"
+              : period === "yesterday"
+              ? "Yesterday's Revenue"
+              : period === "weekly"
+              ? "Weekly Revenue"
+              : period === "monthly"
+              ? "Monthly Revenue"
+              : period === "quarterly"
+              ? "Quarterly Revenue"
+              : period === "yearly"
+              ? "Yearly Revenue"
+              : "Period Revenue"
+          }
           value={compactNaira(kpis.todayRevenue)}
           delta={{ value: 12 }}
         />
@@ -110,7 +129,7 @@ export function DashboardClient({
             <div className="min-w-0">
               <h4 className="text-base sm:text-lg font-bold">Revenue Performance</h4>
               <p className="text-xs sm:text-sm text-muted-foreground">
-                Last 30 days aggregate across fleet
+                Aggregate across fleet for the selected period
               </p>
             </div>
             <div className="flex items-center gap-2 shrink-0">

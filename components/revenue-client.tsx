@@ -11,6 +11,7 @@ import {
 } from "recharts";
 import { AppShell } from "@/components/app-shell";
 import { KpiCard } from "@/components/kpi-card";
+import { FilterBar } from "@/components/filter-bar";
 import { compactNaira, naira } from "@/lib/format";
 
 interface RevenueClientProps {
@@ -23,6 +24,7 @@ interface RevenueClientProps {
   };
   revenuePerVehicle: Array<{ vehicle: string; revenue: number }>;
   flaggedShifts: any[];
+  period: string;
 }
 
 export function RevenueClient({
@@ -30,6 +32,7 @@ export function RevenueClient({
   kpis,
   revenuePerVehicle,
   flaggedShifts,
+  period,
 }: RevenueClientProps) {
   return (
     <AppShell
@@ -37,8 +40,28 @@ export function RevenueClient({
       description="Daily, weekly, and monthly fleet performance analytics"
       user={user}
     >
+      <FilterBar />
+
       <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <KpiCard label="Today" value={compactNaira(kpis.todayRevenue)} delta={{ value: 12 }} />
+        <KpiCard
+          label={
+            period === "daily"
+              ? "Today"
+              : period === "yesterday"
+              ? "Yesterday"
+              : period === "weekly"
+              ? "This Week"
+              : period === "monthly"
+              ? "This Month"
+              : period === "quarterly"
+              ? "This Quarter"
+              : period === "yearly"
+              ? "This Year"
+              : "Selected Period"
+          }
+          value={compactNaira(kpis.todayRevenue)}
+          delta={{ value: 12 }}
+        />
         <KpiCard label="This Week" value={compactNaira(kpis.weeklyRevenue)} delta={{ value: 8 }} delayMs={60} />
         <KpiCard label="This Month" value={compactNaira(kpis.monthlyRevenue)} delta={{ value: 15 }} delayMs={120} />
         <KpiCard label="Avg / Hour" value={compactNaira(kpis.avgRevenuePerHour)} hint="Fleet average" delayMs={180} />
@@ -50,7 +73,7 @@ export function RevenueClient({
         style={{ animationDelay: "240ms" }}
       >
         <h3 className="font-bold mb-1 text-base">Revenue by Vehicle</h3>
-        <p className="text-xs text-muted-foreground mb-5">Today's totals across the active fleet</p>
+        <p className="text-xs text-muted-foreground mb-5">Totals across the active fleet for the selected period</p>
         <div className="h-72">
           {revenuePerVehicle.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">

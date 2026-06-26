@@ -458,3 +458,30 @@ export async function unsuspendOwnerAction(id: string) {
     return { success: false, error: error.message || "Failed to unsuspend owner." };
   }
 }
+
+export async function recordBatchPrintAction(batchId: string, userName: string) {
+  try {
+    if (!batchId || !userName) {
+      return { success: false, error: "Batch ID and User Name are required." };
+    }
+    await dbService.recordBatchPrint(batchId, userName);
+    revalidatePath("/batches");
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || "Failed to record print." };
+  }
+}
+
+export async function deleteBatchAction(batchId: string) {
+  try {
+    if (!batchId) {
+      return { success: false, error: "Batch ID is required." };
+    }
+    await dbService.deleteBatch(batchId);
+    revalidatePath("/batches");
+    revalidatePath("/");
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || "Failed to delete batch." };
+  }
+}

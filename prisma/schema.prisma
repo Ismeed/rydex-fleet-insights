@@ -124,6 +124,8 @@ model CodeBatch {
   driver        Driver       @relation(fields: [driverId], references: [id])
   dateGenerated DateTime     @default(now())
   codes         RewardCode[]
+  printCount    Int          @default(0)
+  printHistory  String       @default("[]")
 }
 
 model RewardCode {

@@ -222,6 +222,8 @@ const getInitialData = (): FallbackData => {
       vehicleId: "muv-kt-001",
       driverId: "drv-1",
       dateGenerated: new Date(nowMs - 5 * 24 * 3600 * 1000).toISOString(),
+      printCount: 0,
+      printHistory: "[]",
     },
     {
       id: "b-2",
@@ -230,6 +232,8 @@ const getInitialData = (): FallbackData => {
       vehicleId: "muv-kt-006",
       driverId: "drv-6",
       dateGenerated: new Date(nowMs - 2 * 24 * 3600 * 1000).toISOString(),
+      printCount: 0,
+      printHistory: "[]",
     }
   ];
 
@@ -409,6 +413,8 @@ export const dbService = {
             vehicleId: b.vehicleId,
             driverId: b.driverId,
             dateGenerated: new Date(b.dateGenerated),
+            printCount: b.printCount || 0,
+            printHistory: b.printHistory || "[]",
           },
         });
       }
@@ -829,6 +835,17 @@ export const dbService = {
 
   async startShift(vehicleId: string, driverId: string, startOdo: number) {
     if (isPrismaEnabled()) {
+      // Update vehicle status to ACTIVE
+      await prisma.vehicle.update({
+        where: { id: vehicleId },
+        data: { status: "ACTIVE" },
+      });
+      // Update driver status to active
+      await prisma.driver.update({
+        where: { id: driverId },
+        data: { status: "active" },
+      });
+
       return await prisma.shift.create({
         data: {
           vehicleId,
@@ -880,6 +897,15 @@ export const dbService = {
         status = "FLAGGED";
       }
 
+      await prisma.vehicle.update({
+        where: { id: shift.vehicleId },
+        data: { status: "ACTIVE" },
+      });
+      await prisma.driver.update({
+        where: { id: shift.driverId },
+        data: { status: "active" },
+      });
+
       return await prisma.shift.update({
         where: { id: shiftId },
         data: {
@@ -911,6 +937,11 @@ export const dbService = {
     if (revenue < 5000 && hours > 4) {
       status = "FLAGGED";
     }
+
+    const vehicle = store.vehicles.find((v) => v.id === shift.vehicleId);
+    if (vehicle) vehicle.status = "ACTIVE";
+    const driver = store.drivers.find((d) => d.id === shift.driverId);
+    if (driver) driver.status = "active";
 
     const updated = {
       ...shift,
@@ -970,6 +1001,8 @@ export const dbService = {
           vehicleId,
           driverId,
           dateGenerated,
+          printCount: 0,
+          printHistory: "[]",
         },
       });
 
@@ -998,6 +1031,8 @@ export const dbService = {
       vehicleId,
       driverId,
       dateGenerated: dateGenerated.toISOString(),
+      printCount: 0,
+      printHistory: "[]",
     };
 
     const newCodes = Array.from({ length: count }, (_, i) => ({
@@ -1154,5 +1189,76 @@ export const dbService = {
       };
     }
     return null;
+  },
+
+  async recordBatchPrint(batchId: string, userName: string) {
+    const now = new Date();
+    if (isPrismaEnabled()) {
+      const batch = await prisma.codeBatch.findUnique({ where: { id: batchId } });
+      if (!batch) throw new Error("Batch not found");
+      const currentCount = batch.printCount || 0;
+      if (currentCount >= 3) {
+        throw new Error("Maximum print limit (3) reached for this batch.");
+      }
+      let historyList: any[] = [];
+      try {
+        historyList = JSON.parse(batch.printHistory || "[]");
+      } catch (e) {
+        historyList = [];
+      }
+      historyList.push({
+        date: now.toLocaleDateString(),
+        time: now.toLocaleTimeString(),
+        user: userName,
+        printNumber: currentCount + 1,
+      });
+      return await prisma.codeBatch.update({
+        where: { id: batchId },
+        data: {
+          printCount: currentCount + 1,
+          printHistory: JSON.stringify(historyList),
+        },
+      });
+    }
+
+    const store = loadFallbackData();
+    const idx = store.batches.findIndex((b) => b.id === batchId);
+    if (idx === -1) throw new Error("Batch not found");
+    const batch = store.batches[idx];
+    const currentCount = batch.printCount || 0;
+    if (currentCount >= 3) {
+      throw new Error("Maximum print limit (3) reached for this batch.");
+    }
+    let historyList: any[] = [];
+    try {
+      historyList = JSON.parse(batch.printHistory || "[]");
+    } catch (e) {
+      historyList = [];
+    }
+    historyList.push({
+      date: now.toLocaleDateString(),
+      time: now.toLocaleTimeString(),
+      user: userName,
+      printNumber: currentCount + 1,
+    });
+    batch.printCount = currentCount + 1;
+    batch.printHistory = JSON.stringify(historyList);
+    store.batches[idx] = batch;
+    saveFallbackData(store);
+    return batch;
+  },
+
+  async deleteBatch(batchId: string) {
+    if (isPrismaEnabled()) {
+      // First delete associated reward codes
+      await prisma.rewardCode.deleteMany({ where: { batchId } });
+      return await prisma.codeBatch.delete({ where: { id: batchId } });
+    }
+
+    const store = loadFallbackData();
+    store.batches = store.batches.filter((b) => b.id !== batchId);
+    store.rewardCodes = store.rewardCodes.filter((c) => c.batchId !== batchId);
+    saveFallbackData(store);
+    return true;
   },
 };

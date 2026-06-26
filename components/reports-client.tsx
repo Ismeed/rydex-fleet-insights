@@ -1,6 +1,8 @@
 "use client";
 
 import { AppShell } from "@/components/app-shell";
+import { FilterBar } from "@/components/filter-bar";
+import { generateReportPDF } from "@/lib/pdf-generator";
 import { Download, FileText, Users, Car, Gift, Printer } from "lucide-react";
 import { toast } from "sonner";
 
@@ -10,6 +12,9 @@ interface ReportsClientProps {
   vehicles: any[];
   drivers: any[];
   redemptions: any[];
+  period: string;
+  startDateStr?: string;
+  endDateStr?: string;
 }
 
 export function ReportsClient({
@@ -18,7 +23,26 @@ export function ReportsClient({
   vehicles,
   drivers,
   redemptions,
+  period,
+  startDateStr,
+  endDateStr,
 }: ReportsClientProps) {
+  
+  const getPeriodText = () => {
+    if (period === "custom") {
+      return `Custom Range (${startDateStr || "—"} to ${endDateStr || "—"})`;
+    }
+    const periodLabels: Record<string, string> = {
+      daily: "Today",
+      yesterday: "Yesterday",
+      weekly: "This Week",
+      monthly: "This Month",
+      quarterly: "This Quarter",
+      yearly: "This Year",
+    };
+    return periodLabels[period] || "Monthly";
+  };
+
   // Client-side CSV generator utility
   const downloadCSV = (filename: string, headers: string[], rows: string[][]) => {
     try {
@@ -41,7 +65,12 @@ export function ReportsClient({
 
   const exportDailyOps = (format: string) => {
     if (format === "PDF") {
-      window.print();
+      try {
+        generateReportPDF("daily-ops", shifts, getPeriodText(), "muva_daily_ops_report.pdf");
+        toast.success("Daily Operations PDF generated successfully!");
+      } catch (e) {
+        toast.error("Failed to generate PDF report");
+      }
       return;
     }
     const headers = [
@@ -75,7 +104,12 @@ export function ReportsClient({
 
   const exportVehicles = (format: string) => {
     if (format === "PDF") {
-      window.print();
+      try {
+        generateReportPDF("vehicles", vehicles, getPeriodText(), "muva_vehicles_report.pdf");
+        toast.success("Vehicle Performance PDF generated successfully!");
+      } catch (e) {
+        toast.error("Failed to generate PDF report");
+      }
       return;
     }
     const headers = ["Vehicle ID", "Plate Number", "Type", "Fuel Type", "Assigned Driver", "Status"];
@@ -92,7 +126,12 @@ export function ReportsClient({
 
   const exportDrivers = (format: string) => {
     if (format === "PDF") {
-      window.print();
+      try {
+        generateReportPDF("drivers", drivers, getPeriodText(), "muva_drivers_report.pdf");
+        toast.success("Driver Performance PDF generated successfully!");
+      } catch (e) {
+        toast.error("Failed to generate PDF report");
+      }
       return;
     }
     const headers = [
@@ -118,7 +157,12 @@ export function ReportsClient({
 
   const exportRewards = (format: string) => {
     if (format === "PDF") {
-      window.print();
+      try {
+        generateReportPDF("rewards", redemptions, getPeriodText(), "muva_redemptions_report.pdf");
+        toast.success("Reward Redemptions PDF generated successfully!");
+      } catch (e) {
+        toast.error("Failed to generate PDF report");
+      }
       return;
     }
     const headers = ["Passenger", "Phone", "Reward Requested", "Points Used", "Status", "Requested At"];
@@ -142,6 +186,8 @@ export function ReportsClient({
 
   return (
     <AppShell title="Reports" description="Generate downloadable reports for CityView Katsina" user={user}>
+      <FilterBar />
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 animate-fade-up">
         {REPORTS.map((r, i) => (
           <div
@@ -171,27 +217,6 @@ export function ReportsClient({
           </div>
         ))}
       </div>
-      
-      {/* Print Styles */}
-      <style jsx global>{`
-        @media print {
-          body * {
-            visibility: hidden;
-          }
-          main, main * {
-            visibility: visible;
-          }
-          main {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-          }
-          aside, header {
-            display: none !important;
-          }
-        }
-      `}</style>
     </AppShell>
   );
 }

@@ -1,17 +1,21 @@
 "use client";
 
 import { useActionState, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { startShiftAction, endShiftAction } from "@/app/actions";
 import { AppShell } from "@/components/app-shell";
-import { compactNaira } from "@/lib/format";
+import { FilterBar } from "@/components/filter-bar";
+import { compactNaira, naira } from "@/lib/format";
 import { toast } from "sonner";
-import { Plus, X, ClipboardCheck } from "lucide-react";
+import { Plus, X, ClipboardCheck, Clock, ShieldAlert } from "lucide-react";
 
 interface ShiftsClientProps {
   user: { name: string; role: string };
   activeShifts: any[];
   vehicles: any[];
   drivers: any[];
+  completedShifts: any[];
+  period: string;
 }
 
 export function ShiftsClient({
@@ -19,7 +23,10 @@ export function ShiftsClient({
   activeShifts,
   vehicles,
   drivers,
+  completedShifts,
+  period,
 }: ShiftsClientProps) {
+  const router = useRouter();
   const [endShiftId, setEndShiftId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -28,7 +35,7 @@ export function ShiftsClient({
       const res = await startShiftAction(prevState, formData);
       if (res.success) {
         toast.success("Morning shift started successfully!");
-        // Reset form or reload
+        router.refresh();
       } else {
         toast.error(res.error || "Failed to start shift");
       }
@@ -43,6 +50,7 @@ export function ShiftsClient({
       if (res.success) {
         toast.success("Shift ended and statistics compiled!");
         setEndShiftId(null);
+        router.refresh();
       } else {
         toast.error(res.error || "Failed to end shift");
       }
@@ -52,6 +60,10 @@ export function ShiftsClient({
   );
 
   const selectedShift = activeShifts.find((s) => s.id === endShiftId);
+
+  // Find dispatched vehicles and drivers
+  const activeVehicleIds = activeShifts.map((s) => s.vehicleId.toLowerCase());
+  const activeDriverIds = activeShifts.map((s) => s.driverId);
 
   return (
     <AppShell
@@ -133,7 +145,7 @@ export function ShiftsClient({
               >
                 <option value="">Select vehicle...</option>
                 {vehicles
-                  .filter((v) => v.status === "ACTIVE")
+                  .filter((v) => v.status === "ACTIVE" && !activeVehicleIds.includes(v.id.toLowerCase()))
                   .map((v) => (
                     <option key={v.id} value={v.id}>
                       {v.id.toUpperCase()} ({v.plateNumber})
@@ -154,7 +166,7 @@ export function ShiftsClient({
               >
                 <option value="">Select driver...</option>
                 {drivers
-                  .filter((d) => d.status === "active")
+                  .filter((d) => d.status === "active" && !activeDriverIds.includes(d.id))
                   .map((d) => (
                     <option key={d.id} value={d.id}>
                       {d.name}
@@ -185,6 +197,81 @@ export function ShiftsClient({
               <Plus className="size-4" /> Dispatch Shift
             </button>
           </form>
+        </div>
+      </div>
+
+      {/* Historical Completed Shifts Section */}
+      <div className="mt-8 bg-white border border-border rounded-xl shadow-sm overflow-hidden animate-fade-up" style={{ animationDelay: "180ms" }}>
+        <div className="p-5 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h3 className="font-bold text-base">Completed Shifts History</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Historical records of dispatched vehicle shifts
+            </p>
+          </div>
+        </div>
+
+        <div className="p-5 bg-surface/30 border-b border-border">
+          <FilterBar />
+        </div>
+
+        <div className="overflow-x-auto">
+          {completedShifts.length > 0 ? (
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-surface text-muted-foreground text-[10px] font-bold uppercase tracking-wider border-b border-border">
+                  <th className="p-4">Date</th>
+                  <th className="p-4">Vehicle</th>
+                  <th className="p-4">Driver</th>
+                  <th className="p-4">Hours</th>
+                  <th className="p-4">Distance</th>
+                  <th className="p-4">Revenue</th>
+                  <th className="p-4 text-right">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border text-sm">
+                {completedShifts.map((s) => (
+                  <tr key={s.id} className="hover:bg-surface/30 transition-colors">
+                    <td className="p-4 font-medium text-muted-foreground">
+                      {new Date(s.startTime).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </td>
+                    <td className="p-4 font-mono font-bold text-brand">{s.vehicleId.toUpperCase()}</td>
+                    <td className="p-4">{s.driver?.name || "Driver"}</td>
+                    <td className="p-4 text-muted-foreground">
+                      {s.hoursWorked !== null ? `${s.hoursWorked}h ${s.minutesWorked}m` : "—"}
+                    </td>
+                    <td className="p-4 text-muted-foreground font-mono">
+                      {s.distanceCovered !== null ? `${s.distanceCovered} KM` : "—"}
+                    </td>
+                    <td className="p-4 font-semibold text-foreground">
+                      {naira(s.revenue || 0)}
+                    </td>
+                    <td className="p-4 text-right">
+                      <span
+                        className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase border ${
+                          s.status === "FLAGGED"
+                            ? "bg-danger-soft text-danger border-danger/10"
+                            : s.status === "LOW_PERF"
+                            ? "bg-warning-soft text-warning border-warning/10"
+                            : "bg-brand/10 text-brand border-brand/10"
+                        }`}
+                      >
+                        {s.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <div className="p-12 text-center text-sm text-muted-foreground">
+              No completed shifts found in the selected period.
+            </div>
+          )}
         </div>
       </div>
 

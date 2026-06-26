@@ -12,6 +12,7 @@ import {
 } from "recharts";
 import { AppShell } from "@/components/app-shell";
 import { KpiCard } from "@/components/kpi-card";
+import { FilterBar } from "@/components/filter-bar";
 import { compactNaira, naira } from "@/lib/format";
 import { ClipboardList, Sparkles, Activity } from "lucide-react";
 
@@ -32,6 +33,7 @@ interface OwnerClientProps {
   revenue30d: Array<{ label: string; revenue: number }>;
   vehiclesList: any[];
   recentActivity: any[];
+  period: string;
 }
 
 export function OwnerClient({
@@ -40,6 +42,7 @@ export function OwnerClient({
   revenue30d,
   vehiclesList,
   recentActivity,
+  period,
 }: OwnerClientProps) {
   return (
     <AppShell
@@ -47,6 +50,8 @@ export function OwnerClient({
       description="MUVA Mobility Partner • Owned fleet performance"
       user={user}
     >
+      <FilterBar />
+
       {/* KPI grid */}
       <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <KpiCard
@@ -55,7 +60,21 @@ export function OwnerClient({
           badge={{ label: `${kpis.activeCount} Active`, tone: "brand" }}
         />
         <KpiCard
-          label="Today's Revenue"
+          label={
+            period === "daily"
+              ? "Today's Revenue"
+              : period === "yesterday"
+              ? "Yesterday's Revenue"
+              : period === "weekly"
+              ? "Weekly Revenue"
+              : period === "monthly"
+              ? "Monthly Revenue"
+              : period === "quarterly"
+              ? "Quarterly Revenue"
+              : period === "yearly"
+              ? "Yearly Revenue"
+              : "Period Revenue"
+          }
           value={compactNaira(kpis.todayRevenue)}
           badge={{ label: "Live", tone: "brand" }}
         />
@@ -84,7 +103,7 @@ export function OwnerClient({
             <div className="min-w-0">
               <h4 className="text-base sm:text-lg font-bold">Revenue Performance</h4>
               <p className="text-xs sm:text-sm text-muted-foreground">
-                Last 30 days aggregate across your owned vehicles
+                Aggregate across your owned vehicles for the selected period
               </p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
