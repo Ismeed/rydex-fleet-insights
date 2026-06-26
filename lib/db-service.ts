@@ -620,8 +620,8 @@ export const dbService = {
     plateNumber: string;
     vehicleType: string;
     fuelType: string;
-    ownerId?: string;
-    assignedDriverId?: string;
+    ownerId?: string | null;
+    assignedDriverId?: string | null;
     status?: string;
   }) {
     if (isPrismaEnabled()) {
@@ -661,8 +661,8 @@ export const dbService = {
     plateNumber?: string;
     vehicleType?: string;
     fuelType?: string;
-    ownerId?: string;
-    assignedDriverId?: string;
+    ownerId?: string | null;
+    assignedDriverId?: string | null;
     status?: string;
   }) {
     if (isPrismaEnabled()) {

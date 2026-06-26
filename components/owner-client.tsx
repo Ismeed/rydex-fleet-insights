@@ -16,6 +16,7 @@ import { KpiCard } from "@/components/kpi-card";
 import { FilterBar } from "@/components/filter-bar";
 import { compactNaira, naira } from "@/lib/format";
 import { ClipboardList, Sparkles, Activity } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface OwnerClientProps {
   user: { name: string; role: string };
