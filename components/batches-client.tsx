@@ -1,12 +1,12 @@
 "use client";
 
-import { useActionState, useTransition, useState } from "react";
+import { useActionState, useTransition } from "react";
 import { generateBatchAction } from "@/app/actions";
 import { AppShell } from "@/components/app-shell";
 import { KpiCard } from "@/components/kpi-card";
 import { toast } from "sonner";
-import { QrCode, Plus, Printer } from "lucide-react";
-import { PrintableSlips } from "@/components/printable-slips";
+import { QrCode, Printer } from "lucide-react";
+import { generateRewardSlipsPDF } from "@/lib/pdf-generator";
 
 interface BatchesClientProps {
   user: { name: string; role: string };
@@ -29,7 +29,6 @@ export function BatchesClient({
   kpis,
 }: BatchesClientProps) {
   const [isPending, startTransition] = useTransition();
-  const [printingCodes, setPrintingCodes] = useState<string[] | null>(null);
 
   const [state, formAction] = useActionState(
     async (prevState: any, formData: FormData) => {
@@ -46,22 +45,30 @@ export function BatchesClient({
 
   const handlePrint = (codes: any[]) => {
     if (!codes || codes.length === 0) {
-      alert("No reward codes available for printing.");
+      toast.error("No reward codes available in this batch.");
       return;
     }
-    // Verify that actual valid codes exist in the batch
-    const validCodes = codes.filter(c => c.code && c.code !== "RYD-XXXXXX");
+    
+    // Filter out placeholders
+    const validCodes = codes
+      .map(c => c.code)
+      .filter(code => code && !code.includes("XXXXXX"));
+
     if (validCodes.length === 0) {
-      alert("No reward codes available for printing.");
+      toast.error("No valid reward codes found in this batch.");
       return;
     }
 
-    const codeStrings = validCodes.map(c => c.code);
-    setPrintingCodes(codeStrings);
-    setTimeout(() => {
-      window.print();
-      setPrintingCodes(null);
-    }, 300);
+    const dateString = new Date().toISOString().split('T')[0];
+    const filename = `MUVA_Reward_Codes_${dateString}.pdf`;
+
+    try {
+      generateRewardSlipsPDF(validCodes, filename);
+      toast.success(`PDF generated successfully: ${filename}`);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to generate PDF document.");
+    }
   };
 
   return (
@@ -70,7 +77,6 @@ export function BatchesClient({
       description="Generate non-sequential, single-use codes for passenger distribution"
       user={user}
     >
-      {printingCodes && <PrintableSlips codes={printingCodes} />}
 
       <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <KpiCard label="Codes Generated" value={kpis.generated.toLocaleString()} />
