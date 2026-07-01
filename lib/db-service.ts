@@ -18,7 +18,30 @@ interface FallbackData {
   maintenances: any[];
 }
 
-const DB_FILE = path.join(process.cwd(), "muva_db_fallback.json");
+import os from "os";
+
+const getDbFilePath = (): string => {
+  const originalPath = path.join(process.cwd(), "muva_db_fallback.json");
+  const isServerless = process.env.VERCEL === "1" || process.env.NODE_ENV === "production" || originalPath.includes("/var/task");
+  
+  if (isServerless) {
+    const tmpPath = path.join(os.tmpdir(), "muva_db_fallback.json");
+    if (!fs.existsSync(tmpPath)) {
+      try {
+        if (fs.existsSync(originalPath)) {
+          fs.copyFileSync(originalPath, tmpPath);
+        }
+      } catch (err) {
+        console.error("Failed to copy bundled seed db to tmp:", err);
+      }
+    }
+    return tmpPath;
+  }
+  
+  return originalPath;
+};
+
+const DB_FILE = getDbFilePath();
 
 const SEEDED_NAMES = [
   "Musa Dahiru",
