@@ -26,6 +26,7 @@ interface RevenueClientProps {
   revenuePerVehicle: Array<{ vehicle: string; revenue: number }>;
   flaggedShifts: any[];
   period: string;
+  companyName: string;
 }
 
 export function RevenueClient({
@@ -34,6 +35,7 @@ export function RevenueClient({
   revenuePerVehicle,
   flaggedShifts,
   period,
+  companyName,
 }: RevenueClientProps) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
@@ -45,6 +47,7 @@ export function RevenueClient({
       title="Revenue Analytics"
       description="Daily, weekly, and monthly fleet performance analytics"
       user={user}
+      companyName={companyName}
     >
       <FilterBar />
 

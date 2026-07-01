@@ -9,15 +9,16 @@ generator client {
 
 enum UserRole {
   SUPER_ADMIN
-  OPERATIONS_OFFICER
-  VEHICLE_OWNER
-  PASSENGER
+  COMPANY_OWNER
+  OPERATIONS_MANAGER
 }
 
 enum VehicleStatus {
-  ACTIVE
+  AVAILABLE
+  ON_ROAD
   MAINTENANCE
-  OFFLINE
+  INACTIVE
+  RETIRED
 }
 
 enum ShiftStatus {
@@ -27,78 +28,115 @@ enum ShiftStatus {
   FLAGGED
 }
 
-enum RewardCodeStatus {
-  UNUSED
-  REDEEMED
-  EXPIRED
+enum ContractStatus {
+  ACTIVE
+  COMPLETED
+  DEFAULTED
+  SUSPENDED
 }
 
-enum RedemptionStatus {
-  PENDING_APPROVAL
-  DELIVERED
-  REJECTED
+enum MaintenanceType {
+  GENERAL_SERVICE
+  OIL_CHANGE
+  BRAKE_REPAIR
+  TYRE_REPLACEMENT
+  ENGINE_REPAIR
+  CNG_INSPECTION
+  ELECTRICAL_REPAIR
+}
+
+model Company {
+  id           String    @id @default(uuid())
+  name         String
+  logo         String?
+  phone        String
+  email        String?
+  address      String?
+  country      String    @default("Nigeria")
+  state        String?
+  fleetType    String    @default("General") // "CNG", "EV", "Tricycle", "Bus", "Motorcycle", "Logistics", etc.
+  subscription String    @default("TRIAL") // TRIAL, BASIC, PREMIUM, ENTERPRISE
+  status       String    @default("ACTIVE") // ACTIVE, SUSPENDED, PENDING
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  users        User[]
+  drivers      Driver[]
+  vehicles     Vehicle[]
+  shifts       Shift[]
+  contracts    HirePurchaseContract[]
+  maintenances MaintenanceJob[]
 }
 
 model User {
-  id            String    @id @default(uuid())
-  name          String
-  phone         String    @unique
-  email         String?   @unique
-  status        String    @default("active") // "active", "suspended"
-  password      String
-  role          UserRole  @default(PASSENGER)
-  points        Int       @default(0)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id        String   @id @default(uuid())
+  name      String
+  phone     String   @unique
+  email     String?  @unique
+  status    String   @default("active") // "active", "suspended"
+  password  String
+  role      UserRole @default(COMPANY_OWNER)
+  points    Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  redemptions   RedemptionRequest[]
-  redeemedCodes RewardCode[]        @relation("RedeemedBy")
-  ownedVehicles Vehicle[]           @relation("OwnedVehicles")
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
 }
 
 model Driver {
-  id             String    @id @default(uuid())
+  id             String   @id @default(uuid())
   name           String
-  phone          String    @unique
+  phone          String   @unique
   address        String
   guarantorName  String
   guarantorPhone String
-  status         String    @default("active") // "active", "suspended", "off-duty"
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  status         String   @default("active") // "active", "suspended", "off-duty"
+  passport       String?
+  emergencyContact String?
+  nextOfKin      String?
+  licenseNumber  String?
+  nationalId     String?
+  employmentDate DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  companyId      String
+  company        Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   assignedVehicle Vehicle?
   shifts          Shift[]
-  batches         CodeBatch[]
-  rewardCodes     RewardCode[]
+  contract        HirePurchaseContract?
 }
 
 model Vehicle {
-  id               String        @id @default(uuid())
-  vehicleNumber    String        @unique
-  vehicleType      String        @default("Keke Napep")
-  fuelType         String        @default("CNG") // CNG, EV
-  plateNumber      String        @unique
-  status           VehicleStatus @default(ACTIVE)
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
-  assignedDriverId String?       @unique
-  assignedDriver   Driver?       @relation(fields: [assignedDriverId], references: [id])
+  id                 String        @id @default(uuid())
+  vehicleNumber      String        @unique
+  registrationNumber String?       @unique
+  engineNumber       String?       @unique
+  chassisNumber      String?       @unique
+  vehicleType        String        @default("Keke Napep")
+  fuelType           String        @default("CNG") // CNG, EV, Petrol, Diesel
+  plateNumber        String        @unique
+  status             VehicleStatus @default(AVAILABLE)
+  purchaseDate       DateTime?
+  purchasePrice      Float?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
 
-  ownerId          String?
-  owner            User?         @relation("OwnedVehicles", fields: [ownerId], references: [id])
+  companyId          String
+  company            Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
-  shifts           Shift[]
-  batches          CodeBatch[]
-  rewardCodes      RewardCode[]
+  assignedDriverId   String?       @unique
+  assignedDriver     Driver?       @relation(fields: [assignedDriverId], references: [id], onDelete: SetNull)
+
+  shifts             Shift[]
+  contract           HirePurchaseContract?
+  maintenances       MaintenanceJob[]
 }
 
 model Shift {
   id              String      @id @default(uuid())
-  vehicleId       String
-  vehicle         Vehicle     @relation(fields: [vehicleId], references: [id])
-  driverId        String
-  driver          Driver      @relation(fields: [driverId], references: [id])
   startTime       DateTime    @default(now())
   endTime         DateTime?
   startOdometer   Float
@@ -110,47 +148,57 @@ model Shift {
   revenuePerHour  Float?
   revenuePerKm    Float?
   status          ShiftStatus @default(ACTIVE)
+  amountExpected  Float       @default(0)
+  amountReceived  Float       @default(0)
+  outstandingBalance Float    @default(0)
+  remarks         String?
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
+
+  companyId       String
+  company         Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  vehicleId       String
+  vehicle         Vehicle     @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  driverId        String
+  driver          Driver      @relation(fields: [driverId], references: [id], onDelete: Cascade)
 }
 
-model CodeBatch {
-  id            String       @id @default(uuid())
-  batchNumber   String       @unique
-  codeCount     Int
-  vehicleId     String
-  vehicle       Vehicle      @relation(fields: [vehicleId], references: [id])
-  driverId      String
-  driver        Driver       @relation(fields: [driverId], references: [id])
-  dateGenerated DateTime     @default(now())
-  codes         RewardCode[]
-  printCount    Int          @default(0)
-  printHistory  String       @default("[]")
+model HirePurchaseContract {
+  id               String         @id @default(uuid())
+  startDate        DateTime       @default(now())
+  targetAmount     Float
+  dailyTarget      Float
+  totalPaid        Float          @default(0)
+  remainingBalance Float
+  status           ContractStatus @default(ACTIVE)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  companyId        String
+  company          Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  vehicleId        String         @unique
+  vehicle          Vehicle        @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  driverId         String         @unique
+  driver           Driver         @relation(fields: [driverId], references: [id], onDelete: Cascade)
 }
 
-model RewardCode {
-  id            String           @id @default(uuid())
-  code          String           @unique
-  status        RewardCodeStatus @default(UNUSED)
-  batchId       String
-  batch         CodeBatch        @relation(fields: [batchId], references: [id])
-  vehicleId     String
-  vehicle       Vehicle          @relation(fields: [vehicleId], references: [id])
-  driverId      String
-  driver        Driver           @relation(fields: [driverId], references: [id])
-  dateGenerated DateTime         @default(now())
-  redeemedDate  DateTime?
-  redeemedById  String?
-  redeemedBy    User?            @relation("RedeemedBy", fields: [redeemedById], references: [id])
-}
+model MaintenanceJob {
+  id        String          @id @default(uuid())
+  type      MaintenanceType
+  workshop  String
+  cost      Float
+  date      DateTime        @default(now())
+  notes     String?
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
 
-model RedemptionRequest {
-  id              String           @id @default(uuid())
-  passengerId     String
-  passenger       User             @relation(fields: [passengerId], references: [id])
-  rewardRequested String
-  pointsUsed      Int
-  status          RedemptionStatus @default(PENDING_APPROVAL)
-  requestedAt     DateTime         @default(now())
-  processedAt     DateTime?
+  companyId String
+  company   Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  vehicleId String
+  vehicle   Vehicle         @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
 }

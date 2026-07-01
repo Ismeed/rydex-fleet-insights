@@ -6,7 +6,7 @@ import { filterByDateRange, getPeriodDateRange, getChartDataForPeriod, PeriodTyp
 
 export const dynamic = "force-dynamic";
 
-interface VehicleOwnerPageProps {
+interface CompanyOwnerPageProps {
   searchParams?: Promise<{
     period?: string;
     start?: string;
@@ -14,15 +14,24 @@ interface VehicleOwnerPageProps {
   }> | any;
 }
 
-export default async function VehicleOwnerPage({ searchParams }: VehicleOwnerPageProps) {
+export default async function CompanyOwnerPage({ searchParams }: CompanyOwnerPageProps) {
   const user = await getCurrentUser();
   if (!user) {
     redirect("/login");
   }
 
-  if (user.role !== "VEHICLE_OWNER") {
+  if (user.role !== "COMPANY_OWNER") {
     redirect("/");
   }
+
+  const companyId = user.companyId;
+  if (!companyId) {
+    redirect("/login");
+  }
+
+  // Load the company info
+  const company = await dbService.getCompanyById(companyId);
+  const companyName = company ? company.name : "MUVA Fleet Workspace";
 
   // Defensive searchParams Promise resolution
   let resolvedParams: any = {};
@@ -39,43 +48,34 @@ export default async function VehicleOwnerPage({ searchParams }: VehicleOwnerPag
 
   const { start, end } = getPeriodDateRange(period, startStr, endStr);
 
-  // Load owned vehicles and shifts associated with them
-  const vehicles = await dbService.getVehicles(user.id);
-  const shifts = await dbService.getShiftsHistory(user.id);
-  const activeShifts = await dbService.getActiveShifts();
+  // Load owned vehicles, shifts, drivers, and contracts
+  const vehicles = await dbService.getVehicles(companyId);
+  const shifts = await dbService.getShiftsHistory(companyId);
+  const drivers = await dbService.getDrivers(companyId);
+  const contracts = await dbService.getHirePurchaseContracts(companyId);
+  const maintenances = await dbService.getMaintenanceJobs(companyId);
 
-  // Filter active shifts for owned vehicles
-  const ownedVehicleIds = vehicles.map((v) => v.id);
-  const activeOwnedShifts = activeShifts.filter((s) => ownedVehicleIds.includes(s.vehicleId));
+  // 1. Vehicles states count
+  const totalVehiclesCount = vehicles.length;
+  const onRoadCount = vehicles.filter((v) => v.status === "ON_ROAD").length;
+  const availableCount = vehicles.filter((v) => v.status === "AVAILABLE").length;
+  const maintenanceCount = vehicles.filter((v) => v.status === "MAINTENANCE").length;
 
-  const totalOwned = vehicles.length;
-  const activeCount = activeOwnedShifts.length;
+  // 2. Drivers status
+  const activeDriversCount = drivers.filter((d) => d.status === "active").length;
+  const absentDriversCount = totalVehiclesCount - onRoadCount; // simple operational mapping
+
+  // 3. HP Contracts status
+  const activeContractsCount = contracts.filter((c) => c.status === "ACTIVE").length;
+  const completedContractsCount = contracts.filter((c) => c.status === "COMPLETED").length;
 
   // Filter shifts based on period
   const filteredShifts = filterByDateRange(shifts, (s) => s.startTime, period, startStr, endStr);
 
-  // Calculations for KPI Cards
-  const todayStart = new Date();
-  todayStart.setHours(0, 0, 0, 0);
-  const todayShifts = shifts.filter((s) => new Date(s.startTime) >= todayStart);
-  const todayRevenue = todayShifts.reduce((sum, s) => sum + (s.revenue || 0), 0);
-
-  const weeklyShifts = shifts.filter((s) => {
-    const d = new Date(s.startTime);
-    const diff = (Date.now() - d.getTime()) / (1000 * 3600 * 24);
-    return diff <= 7;
-  });
-  const weeklyRevenue = weeklyShifts.reduce((sum, s) => sum + (s.revenue || 0), 0);
-
-  const monthlyShifts = shifts.filter((s) => {
-    const d = new Date(s.startTime);
-    const diff = (Date.now() - d.getTime()) / (1000 * 3600 * 24);
-    return diff <= 30;
-  });
-  const monthlyRevenue = monthlyShifts.reduce((sum, s) => sum + (s.revenue || 0), 0);
-
-  // Selected period metrics
+  // 4. Revenue & outstanding calculations
   const periodRevenue = filteredShifts.reduce((sum, s) => sum + (s.revenue || 0), 0);
+  const outstandingRemittance = filteredShifts.reduce((sum, s) => sum + (s.outstandingBalance || 0), 0);
+  
   const totalDistance = filteredShifts.reduce((sum, s) => sum + (s.distanceCovered || 0), 0);
   const totalHours = filteredShifts.reduce((sum, s) => sum + (s.hoursWorked || 0) + (s.minutesWorked || 0) / 60, 0);
 
@@ -91,29 +91,41 @@ export default async function VehicleOwnerPage({ searchParams }: VehicleOwnerPag
     distanceCovered: s.distanceCovered || 0,
     date: s.endTime || s.startTime,
     status: s.status,
+    amountReceived: s.amountReceived,
+    outstandingBalance: s.outstandingBalance,
   }));
 
   // Chart Data: dynamic based on period
   const revenueChartData = getChartDataForPeriod(shifts, period, start, end);
 
-  // Map total distance and total revenue per vehicle
+  // Map total distance, total revenue, and HP progress per vehicle
   const vehiclesList = vehicles.map((v) => {
     const vehicleShifts = filteredShifts.filter((s) => s.vehicleId === v.id);
     const dist = vehicleShifts.reduce((sum, s) => sum + (s.distanceCovered || 0), 0);
     const rev = vehicleShifts.reduce((sum, s) => sum + (s.revenue || 0), 0);
+    const contract = contracts.find((c) => c.vehicleId === v.id && c.status === "ACTIVE");
+    
     return {
       ...v,
       totalDistance: dist,
       totalRevenue: rev,
+      contractProgress: contract 
+        ? Math.round((contract.totalPaid / contract.targetAmount) * 100) 
+        : null,
     };
   });
 
   const kpis = {
-    totalOwned,
-    activeCount,
-    todayRevenue: periodRevenue > 0 ? periodRevenue : (period === "daily" ? todayRevenue : 95000),
-    weeklyRevenue: weeklyRevenue > 0 ? weeklyRevenue : 612500,
-    monthlyRevenue: monthlyRevenue > 0 ? monthlyRevenue : 2415000,
+    totalVehiclesCount,
+    onRoadCount,
+    availableCount,
+    maintenanceCount,
+    activeDriversCount,
+    absentDriversCount,
+    activeContractsCount,
+    completedContractsCount,
+    periodRevenue,
+    outstandingRemittance,
     avgRevenuePerHour,
     avgRevenuePerKm,
     totalDistance,
@@ -127,6 +139,8 @@ export default async function VehicleOwnerPage({ searchParams }: VehicleOwnerPag
       vehiclesList={vehiclesList}
       recentActivity={recentActivity}
       period={period}
+      companyName={companyName}
+      maintenances={maintenances.slice(0, 5)}
     />
   );
 }

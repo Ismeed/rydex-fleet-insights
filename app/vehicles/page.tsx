@@ -14,32 +14,29 @@ export default async function VehiclesPage() {
 
   if (
     user.role !== "SUPER_ADMIN" &&
-    user.role !== "VEHICLE_OWNER" &&
-    user.role !== "OPERATIONS_OFFICER"
+    user.role !== "COMPANY_OWNER" &&
+    user.role !== "OPERATIONS_MANAGER"
   ) {
     redirect("/");
   }
 
-  const vehicles = user.role === "VEHICLE_OWNER"
-    ? await dbService.getVehicles(user.id)
-    : await dbService.getVehicles();
+  // Multi-tenant company context load
+  const isSuperAdmin = user.role === "SUPER_ADMIN";
+  const companyId = user.companyId;
 
-  const rawDrivers = await dbService.getDrivers();
-  const drivers = user.role === "VEHICLE_OWNER"
-    ? rawDrivers.filter((d) => d.assignedVehicle?.ownerId === user.id)
-    : rawDrivers;
+  // Load the company info
+  const company = companyId ? await dbService.getCompanyById(companyId) : null;
+  const companyName = company ? company.name : "MUVA Fleet Workspace";
 
-  const allUsers = await dbService.getUsers();
-  
-  // Filter for users who can own vehicles
-  const owners = allUsers.filter((u) => {
-    if (user.role === "VEHICLE_OWNER") {
-      return u.id === user.id;
-    }
-    return u.role === "VEHICLE_OWNER" || u.role === "SUPER_ADMIN";
-  });
+  const vehicles = isSuperAdmin
+    ? await dbService.getVehicles()
+    : await dbService.getVehicles(companyId || "");
 
-  // Adapt the returned db format to the registry type
+  const drivers = isSuperAdmin
+    ? await dbService.getDrivers()
+    : await dbService.getDrivers(companyId || "");
+
+  // Adapt database format to registry component types
   const formattedVehicles = vehicles.map((v) => ({
     id: v.id,
     vehicleNumber: v.vehicleNumber,
@@ -48,18 +45,18 @@ export default async function VehiclesPage() {
     plateNumber: v.plateNumber,
     status: v.status,
     assignedDriverId: v.assignedDriverId,
-    ownerId: v.ownerId,
+    ownerId: v.companyId, // map ownerId to companyId for registry compatibility
     assignedDriver: v.assignedDriver ? {
       id: v.assignedDriver.id,
       name: v.assignedDriver.name,
       phone: v.assignedDriver.phone,
       status: v.assignedDriver.status
     } : null,
-    owner: v.owner ? {
-      id: v.owner.id,
-      name: v.owner.name,
-      phone: v.owner.phone,
-      role: v.owner.role
+    owner: company ? {
+      id: company.id,
+      name: company.name,
+      phone: company.phone,
+      role: "COMPANY_OWNER"
     } : null
   }));
 
@@ -70,15 +67,16 @@ export default async function VehiclesPage() {
     status: d.status
   }));
 
-  const formattedOwners = owners.map((o) => ({
-    id: o.id,
-    name: o.name,
-    phone: o.phone,
-    role: o.role
-  }));
+  // Dummy owner representing the tenant company for form registry compatibility
+  const formattedOwners = company ? [{
+    id: company.id,
+    name: company.name,
+    phone: company.phone,
+    role: "COMPANY_OWNER"
+  }] : [];
 
   return (
-    <AppShell title="Vehicle Registry" description={`${vehicles.length} vehicles across CityView Katsina`} user={user}>
+    <AppShell title="Vehicles Fleet Registry" description={`${vehicles.length} active vehicles inside ${companyName}`} user={user} companyName={companyName}>
       <VehiclesRegistry 
         initialVehicles={formattedVehicles}
         drivers={formattedDrivers}

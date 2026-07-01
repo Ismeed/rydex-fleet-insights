@@ -167,7 +167,9 @@ export function DriversRegistry({ initialDrivers }: DriversRegistryProps) {
     e.preventDefault();
     if (!confirm("Are you sure you want to suspend this driver?")) return;
 
-    const res = await suspendDriverAction(id);
+    const formData = new FormData();
+    formData.append("id", id);
+    const res = await suspendDriverAction(null, formData);
     if (res.success) {
       setDrivers(prev => prev.map(d => d.id === id ? { ...d, status: "suspended" } : d));
     } else {

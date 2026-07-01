@@ -7,7 +7,7 @@ import { AppShell } from "@/components/app-shell";
 import { FilterBar } from "@/components/filter-bar";
 import { compactNaira, naira } from "@/lib/format";
 import { toast } from "sonner";
-import { Plus, X, ClipboardCheck, Clock, ShieldAlert } from "lucide-react";
+import { Plus, X, ClipboardCheck, Clock } from "lucide-react";
 
 interface ShiftsClientProps {
   user: { name: string; role: string };
@@ -16,6 +16,7 @@ interface ShiftsClientProps {
   drivers: any[];
   completedShifts: any[];
   period: string;
+  companyName: string;
 }
 
 export function ShiftsClient({
@@ -25,6 +26,7 @@ export function ShiftsClient({
   drivers,
   completedShifts,
   period,
+  companyName,
 }: ShiftsClientProps) {
   const router = useRouter();
   const [endShiftId, setEndShiftId] = useState<string | null>(null);
@@ -48,7 +50,7 @@ export function ShiftsClient({
     async (prevState: any, formData: FormData) => {
       const res = await endShiftAction(prevState, formData);
       if (res.success) {
-        toast.success("Shift ended and statistics compiled!");
+        toast.success("Shift ended and HP progress updated!");
         setEndShiftId(null);
         router.refresh();
       } else {
@@ -67,17 +69,18 @@ export function ShiftsClient({
 
   return (
     <AppShell
-      title="Shift Operations"
-      description="Start morning shifts and end evening shifts. Driver dispatch workflows."
+      title="Daily Shift Control"
+      description="Morning vehicle dispatches and evening remittance receipts control deck"
       user={user}
+      companyName={companyName}
     >
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Active Shifts Queue */}
         <div className="lg:col-span-2 bg-white border border-border rounded-xl shadow-sm overflow-hidden animate-fade-up">
           <div className="p-5 border-b border-border">
-            <h3 className="font-bold text-base">Active Shifts</h3>
+            <h3 className="font-bold text-base">Active Vehicles (On Road)</h3>
             <p className="text-xs text-muted-foreground mt-0.5">
-              End an active shift to record closing odometer readings and revenue submitted
+              End an active shift to log closing odometer readings and credit driver remittances.
             </p>
           </div>
           <div className="divide-y divide-border">
@@ -101,16 +104,16 @@ export function ShiftsClient({
                   <div className="text-right shrink-0">
                     <button
                       onClick={() => setEndShiftId(s.id)}
-                      className="px-3.5 py-1.5 bg-danger-soft hover:bg-danger/10 text-danger text-xs font-bold rounded transition-colors"
+                      className="px-3.5 py-1.5 bg-brand-soft hover:bg-brand/20 text-brand-dark text-xs font-bold rounded transition-colors"
                     >
-                      End Shift
+                      Receive Remittance
                     </button>
                   </div>
                 </div>
               ))
             ) : (
               <div className="p-8 text-center text-sm text-muted-foreground">
-                No active vehicle shifts on road right now.
+                All vehicles are parked. Go to morning dispatch form to start a shift.
               </div>
             )}
           </div>
@@ -121,9 +124,9 @@ export function ShiftsClient({
           className="bg-white border border-border rounded-xl shadow-sm p-5 sm:p-6 animate-fade-up"
           style={{ animationDelay: "120ms" }}
         >
-          <h3 className="font-bold text-base mb-1">Start Morning Shift</h3>
+          <h3 className="font-bold text-base mb-1">Morning Dispatch</h3>
           <p className="text-xs text-muted-foreground mb-5">
-            Operations officer records start of vehicle shift
+            Assign driver, vehicle, and log starting odometer readings.
           </p>
 
           <form action={startFormAction} className="space-y-4">
@@ -145,7 +148,7 @@ export function ShiftsClient({
               >
                 <option value="">Select vehicle...</option>
                 {vehicles
-                  .filter((v) => v.status === "ACTIVE" && !activeVehicleIds.includes(v.id.toLowerCase()))
+                  .filter((v) => v.status === "AVAILABLE" && !activeVehicleIds.includes(v.id.toLowerCase()))
                   .map((v) => (
                     <option key={v.id} value={v.id}>
                       {v.id.toUpperCase()} ({v.plateNumber})
@@ -192,7 +195,7 @@ export function ShiftsClient({
 
             <button
               type="submit"
-              className="w-full bg-brand text-brand-foreground py-2.5 rounded-md text-sm font-bold hover:bg-brand/90 transition-colors flex items-center justify-center gap-1.5"
+              className="w-full bg-brand text-brand-foreground py-2.5 rounded-md text-sm font-bold hover:bg-brand/90 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <Plus className="size-4" /> Dispatch Shift
             </button>
@@ -206,7 +209,7 @@ export function ShiftsClient({
           <div>
             <h3 className="font-bold text-base">Completed Shifts History</h3>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Historical records of dispatched vehicle shifts
+              Historical ledger of driver dispatches and collections
             </p>
           </div>
         </div>
@@ -223,9 +226,10 @@ export function ShiftsClient({
                   <th className="p-4">Date</th>
                   <th className="p-4">Vehicle</th>
                   <th className="p-4">Driver</th>
-                  <th className="p-4">Hours</th>
+                  <th className="p-4">Hours Worked</th>
                   <th className="p-4">Distance</th>
-                  <th className="p-4">Revenue</th>
+                  <th className="p-4">Expected (₦)</th>
+                  <th className="p-4">Collected (₦)</th>
                   <th className="p-4 text-right">Status</th>
                 </tr>
               </thead>
@@ -233,7 +237,7 @@ export function ShiftsClient({
                 {completedShifts.map((s) => (
                   <tr key={s.id} className="hover:bg-surface/30 transition-colors">
                     <td className="p-4 font-medium text-muted-foreground">
-                      {new Date(s.startTime).toLocaleDateString("en-US", {
+                      {new Date(s.startTime).toLocaleDateString("en-NG", {
                         month: "short",
                         day: "numeric",
                         year: "numeric",
@@ -247,8 +251,11 @@ export function ShiftsClient({
                     <td className="p-4 text-muted-foreground font-mono">
                       {s.distanceCovered !== null ? `${s.distanceCovered} KM` : "—"}
                     </td>
-                    <td className="p-4 font-semibold text-foreground">
-                      {naira(s.revenue || 0)}
+                    <td className="p-4 text-muted-foreground font-mono">
+                      {naira(s.amountExpected || 0)}
+                    </td>
+                    <td className="p-4 font-semibold text-foreground font-mono">
+                      {naira(s.amountReceived || 0)}
                     </td>
                     <td className="p-4 text-right">
                       <span
@@ -281,14 +288,14 @@ export function ShiftsClient({
           <div className="bg-white border border-border rounded-xl p-5 sm:p-6 w-full max-w-md animate-fade-up relative">
             <button
               onClick={() => setEndShiftId(null)}
-              className="absolute top-4 right-4 text-muted-foreground hover:text-foreground"
+              className="absolute top-4 right-4 text-muted-foreground hover:text-foreground cursor-pointer"
             >
               <X className="size-5" />
             </button>
 
-            <h3 className="font-bold text-lg mb-1">End Shift operations</h3>
+            <h3 className="font-bold text-lg mb-1">Evening Collections</h3>
             <p className="text-xs text-muted-foreground mb-5">
-              Compile vehicle status for <span className="font-mono font-bold text-brand">{selectedShift.vehicleId.toUpperCase()}</span> operated by {selectedShift.driver?.name}
+              Compile vehicle stats for <span className="font-mono font-bold text-brand">{selectedShift.vehicleId.toUpperCase()}</span> operated by {selectedShift.driver?.name}
             </p>
 
             <form action={endFormAction} className="space-y-4">
@@ -325,25 +332,54 @@ export function ShiftsClient({
                 />
               </div>
 
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label htmlFor="amountExpected" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                    Expected Remittance (₦)
+                  </label>
+                  <input
+                    id="amountExpected"
+                    name="amountExpected"
+                    type="number"
+                    defaultValue={selectedShift.driver?.avgPerDay || 12000}
+                    required
+                    className="w-full px-3 py-2 bg-surface border border-border rounded-md text-sm font-mono focus:ring-1 focus:ring-brand outline-none"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label htmlFor="revenue" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                    Collected (₦)
+                  </label>
+                  <input
+                    id="revenue"
+                    name="revenue"
+                    type="number"
+                    placeholder="e.g. 12000"
+                    required
+                    className="w-full px-3 py-2 bg-surface border border-border rounded-md text-sm font-mono focus:ring-1 focus:ring-brand outline-none"
+                  />
+                </div>
+              </div>
+
               <div className="space-y-1">
-                <label htmlFor="revenue" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                  Revenue Submitted (₦)
+                <label htmlFor="remarks" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  Remarks / Notes
                 </label>
                 <input
-                  id="revenue"
-                  name="revenue"
-                  type="number"
-                  placeholder="e.g. 9500"
-                  required
-                  className="w-full px-3 py-2 bg-surface border border-border rounded-md text-sm font-mono focus:ring-1 focus:ring-brand outline-none"
+                  id="remarks"
+                  name="remarks"
+                  type="text"
+                  placeholder="e.g. Returned clean, fuel full"
+                  className="w-full px-3 py-2 bg-surface border border-border rounded-md text-sm focus:ring-1 focus:ring-brand outline-none"
                 />
               </div>
 
               <button
                 type="submit"
-                className="w-full bg-brand text-brand-foreground py-2.5 rounded-md text-sm font-bold hover:bg-brand/90 transition-colors flex items-center justify-center gap-1.5"
+                className="w-full bg-brand text-brand-foreground py-2.5 rounded-md text-sm font-bold hover:bg-brand/90 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
               >
-                <ClipboardCheck className="size-4" /> End Shift & Save
+                <ClipboardCheck className="size-4" /> End Shift & Settle Remittance
               </button>
             </form>
           </div>

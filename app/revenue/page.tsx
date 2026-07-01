@@ -11,7 +11,7 @@ interface RevenuePageProps {
     period?: string;
     start?: string;
     end?: string;
-  }>;
+  }> | any;
 }
 
 export default async function RevenuePage({ searchParams }: RevenuePageProps) {
@@ -20,9 +20,20 @@ export default async function RevenuePage({ searchParams }: RevenuePageProps) {
     redirect("/login");
   }
 
-  if (user.role !== "SUPER_ADMIN") {
+  if (
+    user.role !== "SUPER_ADMIN" &&
+    user.role !== "COMPANY_OWNER" &&
+    user.role !== "OPERATIONS_MANAGER"
+  ) {
     redirect("/");
   }
+
+  const isSuperAdmin = user.role === "SUPER_ADMIN";
+  const companyId = user.companyId;
+
+  // Load company details
+  const company = companyId ? await dbService.getCompanyById(companyId) : null;
+  const companyName = company ? company.name : "MUVA Fleet Workspace";
 
   // Defensive searchParams Promise resolution
   let resolvedParams: any = {};
@@ -39,9 +50,17 @@ export default async function RevenuePage({ searchParams }: RevenuePageProps) {
 
   const { start, end } = getPeriodDateRange(period, startStr, endStr);
 
-  const shifts = await dbService.getShiftsHistory();
-  const vehicles = await dbService.getVehicles();
-  const drivers = await dbService.getDrivers();
+  const shifts = isSuperAdmin
+    ? await dbService.getShiftsHistory()
+    : await dbService.getShiftsHistory(companyId || "");
+
+  const vehicles = isSuperAdmin
+    ? await dbService.getVehicles()
+    : await dbService.getVehicles(companyId || "");
+
+  const drivers = isSuperAdmin
+    ? await dbService.getDrivers()
+    : await dbService.getDrivers(companyId || "");
 
   // Filter shifts based on period
   const filteredShifts = filterByDateRange(shifts, (s) => s.startTime, period, startStr, endStr);
@@ -81,7 +100,7 @@ export default async function RevenuePage({ searchParams }: RevenuePageProps) {
     revenue: vehicleRevenuesMap[id],
   }));
 
-  // If empty, prefill with general totals for visual excellence
+  // Prefill if empty for visual excellence
   if (revenuePerVehicle.length === 0) {
     vehicles.slice(0, 8).forEach((v, i) => {
       revenuePerVehicle.push({
@@ -98,12 +117,12 @@ export default async function RevenuePage({ searchParams }: RevenuePageProps) {
   }));
 
   // If no flagged shifts, mock one for presentation
-  if (flaggedShifts.length === 0) {
+  if (flaggedShifts.length === 0 && drivers.length > 0) {
     flaggedShifts.push({
       id: "mock-flagged",
-      vehicleId: "muv-kt-007",
-      driverId: "drv-7",
-      driver: drivers.find((d) => d.id === "drv-7") || { name: "Bello Lawal" },
+      vehicleId: vehicles[0]?.id || "muv-kt-001",
+      driverId: drivers[0]?.id || "drv-1",
+      driver: drivers[0] || { name: "Bello Lawal" },
       startTime: new Date(Date.now() - 5.8 * 3600 * 1000).toISOString(),
       revenue: 3900,
       hoursWorked: 5,
@@ -125,6 +144,7 @@ export default async function RevenuePage({ searchParams }: RevenuePageProps) {
       revenuePerVehicle={revenuePerVehicle}
       flaggedShifts={flaggedShifts}
       period={period}
+      companyName={companyName}
     />
   );
 }

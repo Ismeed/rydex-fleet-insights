@@ -11,7 +11,7 @@ interface ShiftsPageProps {
     period?: string;
     start?: string;
     end?: string;
-  }>;
+  }> | any;
 }
 
 export default async function ShiftsPage({ searchParams }: ShiftsPageProps) {
@@ -20,9 +20,20 @@ export default async function ShiftsPage({ searchParams }: ShiftsPageProps) {
     redirect("/login");
   }
 
-  if (user.role !== "SUPER_ADMIN" && user.role !== "OPERATIONS_OFFICER") {
+  if (
+    user.role !== "SUPER_ADMIN" &&
+    user.role !== "COMPANY_OWNER" &&
+    user.role !== "OPERATIONS_MANAGER"
+  ) {
     redirect("/");
   }
+
+  const isSuperAdmin = user.role === "SUPER_ADMIN";
+  const companyId = user.companyId;
+
+  // Load company details
+  const company = companyId ? await dbService.getCompanyById(companyId) : null;
+  const companyName = company ? company.name : "MUVA Fleet Workspace";
 
   // Defensive searchParams Promise resolution
   let resolvedParams: any = {};
@@ -37,10 +48,21 @@ export default async function ShiftsPage({ searchParams }: ShiftsPageProps) {
   const startStr = resolvedParams && resolvedParams.start;
   const endStr = resolvedParams && resolvedParams.end;
 
-  const activeShifts = await dbService.getActiveShifts();
-  const vehicles = await dbService.getVehicles();
-  const drivers = await dbService.getDrivers();
-  const allShifts = await dbService.getShiftsHistory();
+  const activeShifts = isSuperAdmin
+    ? await dbService.getActiveShifts()
+    : await dbService.getActiveShifts(companyId || "");
+
+  const vehicles = isSuperAdmin
+    ? await dbService.getVehicles()
+    : await dbService.getVehicles(companyId || "");
+
+  const drivers = isSuperAdmin
+    ? await dbService.getDrivers()
+    : await dbService.getDrivers(companyId || "");
+
+  const allShifts = isSuperAdmin
+    ? await dbService.getShiftsHistory()
+    : await dbService.getShiftsHistory(companyId || "");
 
   // Completed shifts are those with an endTime.
   const completedShifts = allShifts.filter((s) => s.endTime !== null);
@@ -54,6 +76,7 @@ export default async function ShiftsPage({ searchParams }: ShiftsPageProps) {
       drivers={drivers}
       completedShifts={filteredCompleted}
       period={period}
+      companyName={companyName}
     />
   );
 }

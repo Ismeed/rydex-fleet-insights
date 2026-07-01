@@ -4,10 +4,10 @@ import { useState, useTransition } from "react";
 import { cn } from "@/lib/utils";
 import { naira, compactNaira } from "@/lib/format";
 import { 
-  createOwnerAction, 
-  updateOwnerAction, 
-  suspendOwnerAction,
-  unsuspendOwnerAction
+  createUserAction, 
+  updateUserAction, 
+  suspendUserAction,
+  unsuspendUserAction
 } from "@/app/actions";
 
 interface Vehicle {
@@ -120,9 +120,9 @@ export function OwnersRegistry({ initialOwners }: OwnersRegistryProps) {
     startTransition(async () => {
       let res;
       if (modalMode === "add") {
-        res = await createOwnerAction(null, fd);
+        res = await createUserAction(null, fd);
       } else {
-        res = await updateOwnerAction(null, fd);
+        res = await updateUserAction(null, fd);
       }
 
       if (res.success) {
@@ -163,15 +163,18 @@ export function OwnersRegistry({ initialOwners }: OwnersRegistryProps) {
     const isSuspended = owner.status === "suspended";
     const confirmMsg = isSuspended 
       ? `Are you sure you want to unsuspend ${owner.name}?`
-      : `Are you sure you want to suspend ${owner.name}? Suspended owners will lose all portal access immediately.`;
+      : `Are you sure you want to suspend ${owner.name}? Suspended staff/owners will lose all portal access immediately.`;
 
     if (!confirm(confirmMsg)) return;
 
+    const formData = new FormData();
+    formData.append("id", owner.id);
+
     let res;
     if (isSuspended) {
-      res = await unsuspendOwnerAction(owner.id);
+      res = await unsuspendUserAction(null, formData);
     } else {
-      res = await suspendOwnerAction(owner.id);
+      res = await suspendUserAction(null, formData);
     }
 
     if (res.success) {
@@ -181,7 +184,7 @@ export function OwnersRegistry({ initialOwners }: OwnersRegistryProps) {
           : o
       ));
     } else {
-      alert(res.error || "Failed to update owner status.");
+      alert(res.error || "Failed to update user status.");
     }
   };
 

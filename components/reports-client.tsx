@@ -3,7 +3,7 @@
 import { AppShell } from "@/components/app-shell";
 import { FilterBar } from "@/components/filter-bar";
 import { generateReportPDF } from "@/lib/pdf-generator";
-import { Download, FileText, Users, Car, Gift, Printer } from "lucide-react";
+import { Download, FileText, Users, Car, Handshake, Wrench, Printer } from "lucide-react";
 import { toast } from "sonner";
 
 interface ReportsClientProps {
@@ -11,10 +11,12 @@ interface ReportsClientProps {
   shifts: any[];
   vehicles: any[];
   drivers: any[];
-  redemptions: any[];
+  contracts: any[];
+  maintenances: any[];
   period: string;
   startDateStr?: string;
   endDateStr?: string;
+  companyName: string;
 }
 
 export function ReportsClient({
@@ -22,10 +24,12 @@ export function ReportsClient({
   shifts,
   vehicles,
   drivers,
-  redemptions,
+  contracts,
+  maintenances,
   period,
   startDateStr,
   endDateStr,
+  companyName,
 }: ReportsClientProps) {
   
   const getPeriodText = () => {
@@ -75,15 +79,15 @@ export function ReportsClient({
     }
     const headers = [
       "Shift ID",
-      "Vehicle",
+      "Vehicle ID",
       "Driver",
       "Start Time",
       "End Time",
       "Start Odo (KM)",
       "End Odo (KM)",
-      "Distance (KM)",
-      "Revenue (NGN)",
-      "Hours",
+      "Remittance Expected (NGN)",
+      "Remittance Received (NGN)",
+      "Outstanding Balance (NGN)",
       "Status",
     ];
     const rows = shifts.map((s) => [
@@ -94,9 +98,9 @@ export function ReportsClient({
       s.endTime || "Active",
       s.startOdometer,
       s.endOdometer || "—",
-      s.distanceCovered || "—",
-      s.revenue || "0",
-      s.hoursWorked !== null ? `${s.hoursWorked}h ${s.minutesWorked}m` : "Active",
+      s.amountExpected || "0",
+      s.amountReceived || "0",
+      s.outstandingBalance || "0",
       s.status,
     ]);
     downloadCSV("muva_daily_ops_report.csv", headers, rows);
@@ -141,7 +145,6 @@ export function ReportsClient({
       "Guarantor Name",
       "Guarantor Phone",
       "Status",
-      "Avg/Day (NGN)",
     ];
     const rows = drivers.map((d) => [
       d.name,
@@ -150,44 +153,73 @@ export function ReportsClient({
       d.guarantorName,
       d.guarantorPhone,
       d.status,
-      d.avgPerDay,
     ]);
     downloadCSV("muva_drivers_report.csv", headers, rows);
   };
 
-  const exportRewards = (format: string) => {
+  const exportContracts = (format: string) => {
     if (format === "PDF") {
       try {
-        generateReportPDF("rewards", redemptions, getPeriodText(), "muva_redemptions_report.pdf");
-        toast.success("Reward Redemptions PDF generated successfully!");
+        generateReportPDF("contracts", contracts, getPeriodText(), "muva_hire_purchase_report.pdf");
+        toast.success("Hire Purchase Agreements PDF generated!");
       } catch (e) {
         toast.error("Failed to generate PDF report");
       }
       return;
     }
-    const headers = ["Passenger", "Phone", "Reward Requested", "Points Used", "Status", "Requested At"];
-    const rows = redemptions.map((r) => [
-      r.passenger?.name || "Passenger",
-      r.passenger?.phone || "—",
-      r.rewardRequested,
-      r.pointsUsed,
-      r.status,
-      r.requestedAt,
+    const headers = [
+      "Driver Name",
+      "Vehicle ID",
+      "Target Amount (NGN)",
+      "Daily Target (NGN)",
+      "Total Paid (NGN)",
+      "Remaining Balance (NGN)",
+      "Status",
+    ];
+    const rows = contracts.map((c) => [
+      c.driver?.name || "Driver",
+      c.vehicleId,
+      c.targetAmount,
+      c.dailyTarget,
+      c.totalPaid,
+      c.remainingBalance,
+      c.status,
     ]);
-    downloadCSV("muva_redemptions_report.csv", headers, rows);
+    downloadCSV("muva_hire_purchase_report.csv", headers, rows);
+  };
+
+  const exportMaintenances = (format: string) => {
+    if (format === "PDF") {
+      try {
+        generateReportPDF("maintenances", maintenances, getPeriodText(), "muva_maintenance_report.pdf");
+        toast.success("Maintenance History PDF generated!");
+      } catch (e) {
+        toast.error("Failed to generate PDF report");
+      }
+      return;
+    }
+    const headers = ["Vehicle ID", "Repair Type", "Workshop", "Cost (NGN)", "Date", "Notes"];
+    const rows = maintenances.map((m) => [
+      m.vehicleId,
+      m.type.replace("_", " "),
+      m.workshop,
+      m.cost,
+      m.date,
+      m.notes || "",
+    ]);
+    downloadCSV("muva_maintenance_report.csv", headers, rows);
   };
 
   const REPORTS = [
-    { icon: FileText, label: "Daily Operations", desc: "Per-shift activity, revenue, distance records", action: exportDailyOps },
-    { icon: Car, label: "Vehicle Performance", desc: "Plate details, fuel types, statuses, registry", action: exportVehicles },
-    { icon: Users, label: "Driver Performance", desc: "Driver roster, phone contacts, guarantors, averages", action: exportDrivers },
-    ...(user.role === "SUPER_ADMIN"
-      ? [{ icon: Gift, label: "Reward Redemptions", desc: "Passenger loyalty code exchanges, approvals queue", action: exportRewards }]
-      : []),
+    { icon: FileText, label: "Daily Operations", desc: "Per-shift activity, expected & received remittances, odometer metrics", action: exportDailyOps },
+    { icon: Car, label: "Vehicle Performance", desc: "Plate details, fuel types, repair states, registry listing", action: exportVehicles },
+    { icon: Users, label: "Driver Directory", desc: "Driver roster, phone contacts, guarantors, active statuses", action: exportDrivers },
+    { icon: Handshake, label: "Hire Purchase Progress", desc: "Contracts tracking, total payments, expected completion schedules", action: exportContracts },
+    { icon: Wrench, label: "Maintenance History", desc: "Workshop details, costs logged per unit, repair categories", action: exportMaintenances },
   ];
 
   return (
-    <AppShell title="Reports" description="Generate downloadable reports for CityView Katsina" user={user}>
+    <AppShell title="Reports Control Centre" description={`Generate downloadable performance reports for ${companyName}`} user={user} companyName={companyName}>
       <FilterBar />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 animate-fade-up">

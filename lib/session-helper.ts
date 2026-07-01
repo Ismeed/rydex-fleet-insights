@@ -7,12 +7,13 @@ export async function getCurrentUser() {
   const role = cookieStore.get("muva-role")?.value;
   const name = cookieStore.get("muva-name")?.value;
   const id = cookieStore.get("muva-id")?.value;
+  const companyId = cookieStore.get("muva-company-id")?.value || null;
 
   if (!phone || !role || !name || !id) {
     return null;
   }
 
-  // Get freshest points if they are a passenger
+  // Get freshest points if they are a passenger (for backwards compatibility if any)
   if (role === "PASSENGER") {
     const user = await dbService.getUserByPhone(phone);
     if (user) {
@@ -22,9 +23,10 @@ export async function getCurrentUser() {
         phone: user.phone,
         role: user.role,
         points: user.points,
+        companyId: user.companyId || null,
       };
     }
   }
 
-  return { id, name, phone, role };
+  return { id, name, phone, role, companyId };
 }

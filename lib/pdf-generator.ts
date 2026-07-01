@@ -1,115 +1,5 @@
 import { jsPDF } from "jspdf";
 
-/**
- * Generates a high-resolution, print-ready PDF containing reward slips.
- * Laid out as 5 columns by 10 rows (50 slips) on A4 Portrait pages.
- */
-export function generateRewardSlipsPDF(codes: string[], filename: string) {
-  const doc = new jsPDF({
-    orientation: "portrait",
-    unit: "mm",
-    format: "a4",
-  });
-
-  const pageWidth = 210;
-  const pageHeight = 297;
-  
-  // Set margins to 8mm for a larger printable area
-  const marginLeft = 8;
-  const marginTop = 8;
-  const marginRight = 8;
-  const marginBottom = 8;
-  
-  const cols = 5;
-  const rows = 10;
-
-  const totalWidthForTickets = pageWidth - marginLeft - marginRight;
-  const ticketWidth = totalWidthForTickets / cols; // 194 / 5 = 38.8mm
-
-  const totalHeightForTickets = pageHeight - marginTop - marginBottom;
-  const ticketHeight = totalHeightForTickets / rows; // 281 / 10 = 28.1mm
-
-  const slipsPerPage = cols * rows; // 50
-
-  for (let index = 0; index < codes.length; index++) {
-    const pageIndex = Math.floor(index / slipsPerPage);
-    const slipOnPageIndex = index % slipsPerPage;
-    const colIndex = slipOnPageIndex % cols;
-    const rowIndex = Math.floor(slipOnPageIndex / cols);
-
-    // If we've reached a new page (beyond the first page), add it.
-    if (index > 0 && slipOnPageIndex === 0) {
-      doc.addPage();
-    }
-
-    const x = marginLeft + colIndex * ticketWidth;
-    const y = marginTop + rowIndex * ticketHeight;
-
-    const code = codes[index];
-
-    // --- 1. DRAW SLIP BORDER (Dashed Cut Lines) ---
-    doc.setLineDashPattern([1.5, 1], 0);
-    doc.setDrawColor(180, 185, 190); // Grayish border for cutting
-    doc.setLineWidth(0.15);
-    doc.rect(x, y, ticketWidth, ticketHeight, "S");
-    doc.setLineDashPattern([], 0); // Reset to solid
-
-    // --- 2. BRAND HEADER TEXT ---
-    doc.setTextColor(15, 138, 95); // MUVA Emerald Green (#0F8A5F)
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(7);
-    doc.text("MUVA Mobility", x + ticketWidth / 2, y + 4.5, { align: "center" });
-
-    // Tagline
-    doc.setTextColor(120, 125, 135); // Gray text
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(3.8);
-    doc.text("Powering Smarter Mobility", x + ticketWidth / 2, y + 6.8, { align: "center" });
-
-    // --- 3. THANK YOU MESSAGE ---
-    doc.setTextColor(55, 65, 81); // Gray-700
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(4.5);
-    doc.text("Thank you for riding with MUVA!", x + ticketWidth / 2, y + 10.2, { align: "center" });
-
-    // --- 4. REWARD CODE CONTAINER BOX ---
-    // Background: very light gray box
-    doc.setFillColor(243, 244, 246); // Gray-100
-    doc.setDrawColor(229, 231, 235); // Gray-200
-    doc.setLineWidth(0.15);
-    const boxWidth = 32;
-    const boxHeight = 5.5;
-    const boxX = x + (ticketWidth - boxWidth) / 2;
-    const boxY = y + 11.8;
-    doc.roundedRect(boxX, boxY, boxWidth, boxHeight, 1, 1, "FD");
-
-    // Box Value: The actual code
-    doc.setTextColor(17, 24, 39); // Gray-900
-    doc.setFont("courier", "bold");
-    doc.setFontSize(8.5);
-    doc.text(code, boxX + boxWidth / 2, boxY + 4.0, { align: "center" });
-
-    // --- 5. INSTRUCTIONS & WEBSITE ---
-    doc.setTextColor(15, 138, 95); // MUVA Green
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(5);
-    doc.text("www.muvamobility.com", x + ticketWidth / 2, y + 20.8, { align: "center" });
-
-    doc.setTextColor(75, 85, 99); // Gray-600
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(3.8);
-    doc.text("Record code to earn points", x + ticketWidth / 2, y + 23.2, { align: "center" });
-
-    // --- 6. CALL TO ACTION ---
-    doc.setTextColor(107, 114, 128); // Gray-500
-    doc.setFont("helvetica", "italic");
-    doc.setFontSize(3.8);
-    doc.text("Keep riding with MUVA to earn rewards!", x + ticketWidth / 2, y + 26.0, { align: "center" });
-  }
-
-  doc.save(filename);
-}
-
 interface ColLayout {
   header: string;
   width: number;
@@ -118,7 +8,7 @@ interface ColLayout {
 }
 
 export function generateReportPDF(
-  reportType: "daily-ops" | "vehicles" | "drivers" | "rewards",
+  reportType: "daily-ops" | "vehicles" | "drivers" | "contracts" | "maintenances",
   items: any[],
   periodText: string,
   filename: string
@@ -137,7 +27,6 @@ export function generateReportPDF(
   const marginBottom = 15;
 
   // --- 1. DRAW BRANDED REPORT HEADER ---
-  // Brand Green Header strip
   doc.setFillColor(15, 138, 95); // MUVA Green
   doc.rect(marginLeft, marginTop, 190, 1.5, "F");
 
@@ -145,21 +34,22 @@ export function generateReportPDF(
   doc.setTextColor(17, 24, 39); // Dark Slate
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
-  doc.text("MUVA Mobility", marginLeft, marginTop + 7);
+  doc.text("MUVA Mobility SaaS", marginLeft, marginTop + 7);
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
   doc.setTextColor(107, 114, 128); // Gray-500
-  doc.text("Powering Smarter Mobility", marginLeft, marginTop + 11);
+  doc.text("Fleet Operations & Hire Purchase OS", marginLeft, marginTop + 11);
 
   // Right-aligned report details
   const reportTitles: Record<string, string> = {
     "daily-ops": "DAILY OPERATIONS REPORT",
-    "vehicles": "VEHICLE PERFORMANCE REPORT",
-    "drivers": "DRIVER PERFORMANCE REPORT",
-    "rewards": "REWARD REDEMPTIONS REPORT",
+    "vehicles": "VEHICLE FLEET LISTING",
+    "drivers": "DRIVER ROSTER REGISTER",
+    "contracts": "HIRE PURCHASE AGREEMENTS",
+    "maintenances": "FLEET MAINTENANCE LEDGER",
   };
-  const title = reportTitles[reportType] || "BUSINESS REPORT";
+  const title = reportTitles[reportType] || "SaaS OPERATIONS REPORT";
   
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
@@ -188,51 +78,61 @@ export function generateReportPDF(
   if (reportType === "daily-ops") {
     const totalRev = items.reduce((sum, s) => sum + (s.revenue || 0), 0);
     const shiftsCount = items.length;
-    const totalDist = items.reduce((sum, s) => sum + (s.distanceCovered || 0), 0);
-    const totalHrs = items.reduce((sum, s) => sum + (s.hoursWorked || 0) + (s.minutesWorked || 0) / 60, 0);
-    const avgRevHr = totalHrs > 0 ? Math.round(totalRev / totalHrs) : 0;
+    const expected = items.reduce((sum, s) => sum + (s.amountExpected || 0), 0);
+    const shortfall = Math.max(0, expected - totalRev);
 
     cards.push(
-      { label: "TOTAL REVENUE", value: `NGN ${totalRev.toLocaleString()}` },
-      { label: "TOTAL SHIFTS", value: String(shiftsCount) },
-      { label: "DISTANCE COVERED", value: `${Math.round(totalDist).toLocaleString()} KM` },
-      { label: "AVG REVENUE / HOUR", value: `NGN ${avgRevHr.toLocaleString()}` }
+      { label: "COLLECTED REMITTANCE", value: `₦${totalRev.toLocaleString()}` },
+      { label: "EXPECTED REVENUE", value: `₦${expected.toLocaleString()}` },
+      { label: "SHORTFALL BALANCE", value: `₦${shortfall.toLocaleString()}` },
+      { label: "TOTAL DISPATCH SHIFTS", value: String(shiftsCount) }
     );
   } else if (reportType === "vehicles") {
     const totalVeh = items.length;
-    const activeVeh = items.filter((v) => v.status === "ACTIVE").length;
-    const cngVeh = items.filter((v) => String(v.fuelType).toUpperCase() === "CNG").length;
-    const evVeh = items.filter((v) => String(v.fuelType).toUpperCase() === "EV").length;
+    const activeVeh = items.filter((v) => v.status === "ON_ROAD").length;
+    const availVeh = items.filter((v) => v.status === "AVAILABLE").length;
+    const maintVeh = items.filter((v) => v.status === "MAINTENANCE").length;
 
     cards.push(
       { label: "TOTAL REGISTERED", value: String(totalVeh) },
-      { label: "ACTIVE VEHICLES", value: String(activeVeh) },
-      { label: "CNG VEHICLES", value: String(cngVeh) },
-      { label: "EV VEHICLES", value: String(evVeh) }
+      { label: "ON ROAD UNITS", value: String(activeVeh) },
+      { label: "AVAILABLE UNITS", value: String(availVeh) },
+      { label: "IN WORKSHOP", value: String(maintVeh) }
     );
   } else if (reportType === "drivers") {
     const totalDrv = items.length;
     const activeDrv = items.filter((d) => d.status === "active").length;
     const suspendedDrv = items.filter((d) => d.status === "suspended").length;
-    const avgRev = items.reduce((sum, d) => sum + (d.avgPerDay || 0), 0) / (totalDrv || 1);
+    const inactiveDrv = totalDrv - activeDrv - suspendedDrv;
 
     cards.push(
       { label: "TOTAL DRIVERS", value: String(totalDrv) },
       { label: "ACTIVE DRIVERS", value: String(activeDrv) },
       { label: "SUSPENDED DRIVERS", value: String(suspendedDrv) },
-      { label: "AVG DAILY REVENUE", value: `NGN ${Math.round(avgRev).toLocaleString()}` }
+      { label: "INACTIVE ROSTER", value: String(inactiveDrv) }
     );
-  } else if (reportType === "rewards") {
-    const totalReq = items.length;
-    const pendingReq = items.filter((r) => r.status === "PENDING_APPROVAL").length;
-    const deliveredReq = items.filter((r) => r.status === "DELIVERED").length;
-    const totalPts = items.reduce((sum, r) => sum + (r.pointsUsed || 0), 0);
+  } else if (reportType === "contracts") {
+    const activeCon = items.filter((c) => c.status === "ACTIVE").length;
+    const settledCon = items.filter((c) => c.status === "COMPLETED").length;
+    const totalPaid = items.reduce((sum, c) => sum + (c.totalPaid || 0), 0);
+    const outstanding = items.reduce((sum, c) => sum + (c.remainingBalance || 0), 0);
 
     cards.push(
-      { label: "TOTAL REDEMPTIONS", value: String(totalReq) },
-      { label: "PENDING APPROVAL", value: String(pendingReq) },
-      { label: "DELIVERED REWARDS", value: String(deliveredReq) },
-      { label: "TOTAL POINTS USED", value: `${totalPts.toLocaleString()} PTS` }
+      { label: "ACTIVE HP AGREEMENTS", value: String(activeCon) },
+      { label: "SETTLED CONTRACTS", value: String(settledCon) },
+      { label: "TOTAL PAID TO DATE", value: `₦${totalPaid.toLocaleString()}` },
+      { label: "OUTSTANDING VALUE", value: `₦${outstanding.toLocaleString()}` }
+    );
+  } else if (reportType === "maintenances") {
+    const totalJobs = items.length;
+    const totalCost = items.reduce((sum, m) => sum + (m.cost || 0), 0);
+    const avgCost = totalJobs > 0 ? Math.round(totalCost / totalJobs) : 0;
+
+    cards.push(
+      { label: "TOTAL REPAIR JOBS", value: String(totalJobs) },
+      { label: "TOTAL SPENT (NGN)", value: `₦${totalCost.toLocaleString()}` },
+      { label: "AVERAGE COST/JOB", value: `₦${avgCost.toLocaleString()}` },
+      { label: "AUDITED UNITS", value: String(new Set(items.map(i => i.vehicleId)).size) }
     );
   }
 
@@ -243,7 +143,6 @@ export function generateReportPDF(
 
   cards.forEach((card, index) => {
     const cardX = marginLeft + index * (cardWidth + cardSpacing);
-    // Draw background
     doc.setFillColor(249, 250, 251); // Gray-50
     doc.setDrawColor(229, 231, 235); // Gray-200
     doc.setLineWidth(0.2);
@@ -266,40 +165,49 @@ export function generateReportPDF(
   let columns: ColLayout[] = [];
   if (reportType === "daily-ops") {
     columns = [
-      { header: "ID", width: 22, align: "left", getter: (s) => s.id },
-      { header: "Vehicle", width: 22, align: "left", getter: (s) => s.vehicleId.toUpperCase() },
-      { header: "Driver", width: 35, align: "left", getter: (s) => s.driver?.name || "Driver" },
-      { header: "Duration", width: 26, align: "left", getter: (s) => s.hoursWorked !== null ? `${s.hoursWorked}h ${s.minutesWorked}m` : "Active" },
-      { header: "Date", width: 25, align: "left", getter: (s) => new Date(s.startTime).toLocaleDateString() },
-      { header: "Distance", width: 25, align: "right", getter: (s) => s.distanceCovered !== null ? `${Math.round(s.distanceCovered)} KM` : "—" },
-      { header: "Revenue", width: 35, align: "right", getter: (s) => s.revenue ? "N" + Math.round(s.revenue).toLocaleString() : "N0" },
+      { header: "ID", width: 20, align: "left", getter: (s) => s.id },
+      { header: "Vehicle ID", width: 22, align: "left", getter: (s) => s.vehicleId.toUpperCase() },
+      { header: "Driver Name", width: 35, align: "left", getter: (s) => s.driver?.name || "Driver" },
+      { header: "Duration", width: 25, align: "left", getter: (s) => s.hoursWorked !== null ? `${s.hoursWorked}h ${s.minutesWorked}m` : "Active" },
+      { header: "Expected", width: 28, align: "right", getter: (s) => "₦" + Math.round(s.amountExpected || 0).toLocaleString() },
+      { header: "Received", width: 28, align: "right", getter: (s) => "₦" + Math.round(s.amountReceived || 0).toLocaleString() },
+      { header: "Shortfall", width: 32, align: "right", getter: (s) => "₦" + Math.round(s.outstandingBalance || 0).toLocaleString() },
     ];
   } else if (reportType === "vehicles") {
     columns = [
       { header: "Vehicle ID", width: 30, align: "left", getter: (v) => v.id.toUpperCase() },
-      { header: "Plate No.", width: 35, align: "left", getter: (v) => v.plateNumber },
-      { header: "Type", width: 30, align: "left", getter: (v) => v.vehicleType },
-      { header: "Fuel", width: 25, align: "left", getter: (v) => v.fuelType },
-      { header: "Assigned Driver", width: 45, align: "left", getter: (v) => v.assignedDriver?.name || "None" },
+      { header: "Plate Number", width: 35, align: "left", getter: (v) => v.plateNumber },
+      { header: "Type", width: 35, align: "left", getter: (v) => v.vehicleType },
+      { header: "Fuel Type", width: 25, align: "left", getter: (v) => v.fuelType },
+      { header: "Assigned Driver", width: 40, align: "left", getter: (v) => v.assignedDriver?.name || "None" },
       { header: "Status", width: 25, align: "right", getter: (v) => v.status },
     ];
   } else if (reportType === "drivers") {
     columns = [
-      { header: "Driver Name", width: 35, align: "left", getter: (d) => d.name },
-      { header: "Phone Number", width: 30, align: "left", getter: (d) => d.phone },
-      { header: "Address", width: 40, align: "left", getter: (d) => d.address },
+      { header: "Driver Name", width: 40, align: "left", getter: (d) => d.name },
+      { header: "Phone Number", width: 35, align: "left", getter: (d) => d.phone },
+      { header: "Address", width: 55, align: "left", getter: (d) => d.address },
       { header: "Guarantor Name", width: 35, align: "left", getter: (d) => d.guarantorName },
       { header: "Status", width: 25, align: "right", getter: (d) => d.status },
-      { header: "Avg/Day", width: 25, align: "right", getter: (d) => d.avgPerDay ? "N" + Math.round(d.avgPerDay).toLocaleString() : "N0" },
     ];
-  } else if (reportType === "rewards") {
+  } else if (reportType === "contracts") {
     columns = [
-      { header: "Passenger", width: 40, align: "left", getter: (r) => r.passenger?.name || "Passenger" },
-      { header: "Phone", width: 35, align: "left", getter: (r) => r.passenger?.phone || "—" },
-      { header: "Reward Requested", width: 45, align: "left", getter: (r) => r.rewardRequested },
-      { header: "Points", width: 20, align: "right", getter: (r) => String(r.pointsUsed) },
-      { header: "Status", width: 25, align: "right", getter: (r) => r.status },
-      { header: "Date", width: 25, align: "right", getter: (r) => new Date(r.requestedAt).toLocaleDateString() },
+      { header: "Driver", width: 35, align: "left", getter: (c) => c.driver?.name || "Driver" },
+      { header: "Vehicle ID", width: 25, align: "left", getter: (c) => c.vehicleId.toUpperCase() },
+      { header: "Target Amount", width: 32, align: "right", getter: (c) => "₦" + Math.round(c.targetAmount || 0).toLocaleString() },
+      { header: "Daily Target", width: 28, align: "right", getter: (c) => "₦" + Math.round(c.dailyTarget || 0).toLocaleString() },
+      { header: "Total Paid", width: 28, align: "right", getter: (c) => "₦" + Math.round(c.totalPaid || 0).toLocaleString() },
+      { header: "Outstanding", width: 22, align: "right", getter: (c) => "₦" + Math.round(c.remainingBalance || 0).toLocaleString() },
+      { header: "Status", width: 20, align: "right", getter: (c) => c.status },
+    ];
+  } else if (reportType === "maintenances") {
+    columns = [
+      { header: "Vehicle ID", width: 30, align: "left", getter: (m) => m.vehicleId.toUpperCase() },
+      { header: "Repair Category", width: 35, align: "left", getter: (m) => m.type.replace("_", " ") },
+      { header: "Workshop Name", width: 40, align: "left", getter: (m) => m.workshop },
+      { header: "Cost Expense", width: 30, align: "right", getter: (m) => "₦" + Math.round(m.cost || 0).toLocaleString() },
+      { header: "Repair Date", width: 25, align: "right", getter: (m) => new Date(m.date).toLocaleDateString("en-NG", { day: "numeric", month: "short" }) },
+      { header: "Notes", width: 30, align: "left", getter: (m) => m.notes || "None" },
     ];
   }
 
@@ -400,8 +308,7 @@ function drawReportTable(
       }
       
       const rawText = col.getter(item) || "";
-      // Smart substring truncate to avoid overlap in cells
-      const maxCharLen = Math.floor(col.width / 1.7);
+      const maxCharLen = Math.floor(col.width / 1.5);
       const text = rawText.length > maxCharLen ? rawText.substring(0, maxCharLen - 3) + "..." : rawText;
       
       doc.text(text, textX, currentY + 4.8, { align: col.align });
@@ -411,4 +318,3 @@ function drawReportTable(
     currentY += rowHeight;
   });
 }
-

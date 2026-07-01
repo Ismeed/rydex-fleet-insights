@@ -12,11 +12,24 @@ export default async function DriversPage() {
     redirect("/login");
   }
 
-  if (user.role !== "SUPER_ADMIN") {
+  if (
+    user.role !== "SUPER_ADMIN" &&
+    user.role !== "COMPANY_OWNER" &&
+    user.role !== "OPERATIONS_MANAGER"
+  ) {
     redirect("/");
   }
 
-  const drivers = await dbService.getDrivers();
+  const isSuperAdmin = user.role === "SUPER_ADMIN";
+  const companyId = user.companyId;
+
+  // Load company details
+  const company = companyId ? await dbService.getCompanyById(companyId) : null;
+  const companyName = company ? company.name : "MUVA Fleet Workspace";
+
+  const drivers = isSuperAdmin
+    ? await dbService.getDrivers()
+    : await dbService.getDrivers(companyId || "");
 
   // Format DB drivers to match DriversRegistry interface
   const formattedDrivers = drivers.map((d) => ({
@@ -36,7 +49,7 @@ export default async function DriversPage() {
   }));
 
   return (
-    <AppShell title="Drivers" description={`${drivers.length} drivers on roster`} user={user}>
+    <AppShell title="Drivers Registry" description={`${drivers.length} drivers on roster inside ${companyName}`} user={user} companyName={companyName}>
       <DriversRegistry initialDrivers={formattedDrivers} />
     </AppShell>
   );
