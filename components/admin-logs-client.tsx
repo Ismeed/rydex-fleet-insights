@@ -102,7 +102,7 @@ export function AdminLogsClient({
         user: "Ops Manager",
         timestamp: s.endTime,
         severity: isShortfall ? "WARNING" : "INFO",
-        details: `Closed shift for vehicle "${s.vehicleId.toUpperCase()}". Collected: ₦${s.revenue.toLocaleString()} (Expected: ₦${s.amountExpected?.toLocaleString() || "12,000"} • Shortfall: ₦${s.outstandingBalance.toLocaleString()})`,
+        details: `Closed shift for vehicle "${s.vehicleId.toUpperCase()}". Collected: ₦${(s.revenue || 0).toLocaleString()} (Expected: ₦${(s.amountExpected || 0).toLocaleString()} • Shortfall: ₦${(s.outstandingBalance || 0).toLocaleString()})`,
       });
     }
   });
