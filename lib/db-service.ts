@@ -41,7 +41,7 @@ const getDbFilePath = (): string => {
   return originalPath;
 };
 
-const DB_FILE = getDbFilePath();
+let DB_FILE = getDbFilePath();
 
 const SEEDED_NAMES = [
   "Musa Dahiru",
@@ -416,16 +416,48 @@ const loadFallbackData = (): FallbackData => {
       const content = fs.readFileSync(DB_FILE, "utf-8");
       return JSON.parse(content);
     } catch (e) {
-      console.error("Error loading fallback DB file. Resetting.", e);
+      console.error("Error loading fallback DB file.", e);
     }
   }
+
+  const tmpPath = path.join(os.tmpdir(), "muva_db_fallback.json");
+  if (fs.existsSync(tmpPath)) {
+    DB_FILE = tmpPath;
+    try {
+      const content = fs.readFileSync(DB_FILE, "utf-8");
+      return JSON.parse(content);
+    } catch (e) {}
+  }
+
   const initial = getInitialData();
   saveFallbackData(initial);
   return initial;
 };
 
 const saveFallbackData = (data: FallbackData) => {
-  fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), "utf-8");
+  try {
+    fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), "utf-8");
+  } catch (err: any) {
+    if (err.code === "EROFS" || err.code === "EACCES" || DB_FILE.includes("/var/task")) {
+      console.warn(`Redirecting DB write from ${DB_FILE} to /tmp due to:`, err.message);
+      const tmpPath = path.join(os.tmpdir(), "muva_db_fallback.json");
+      if (DB_FILE !== tmpPath) {
+        try {
+          if (fs.existsSync(DB_FILE)) {
+            fs.copyFileSync(DB_FILE, tmpPath);
+          }
+        } catch (copyErr) {
+          console.error("Failed to copy seed database to tmp:", copyErr);
+        }
+        DB_FILE = tmpPath;
+        fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), "utf-8");
+      } else {
+        throw err;
+      }
+    } else {
+      throw err;
+    }
+  }
 };
 
 // Helper to update a Hire Purchase contract balance

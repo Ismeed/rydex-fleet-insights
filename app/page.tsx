@@ -22,6 +22,10 @@ export default async function LandingRouterPage() {
     redirect("/operations");
   }
 
+  if (user.role === "PASSENGER") {
+    redirect("/portal");
+  }
+
   // Fallback to login if role is unknown
   redirect("/login");
 }
