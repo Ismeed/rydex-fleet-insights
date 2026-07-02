@@ -46,6 +46,7 @@ const OPERATIONS_NAV = [
   { href: "/shifts", label: "Shift Control", icon: ClipboardList },
   { href: "/vehicles", label: "Vehicles", icon: Car },
   { href: "/drivers", label: "Drivers", icon: Users },
+  { href: "/contracts", label: "Hire Purchase", icon: Handshake },
   { href: "/maintenance", label: "Maintenance", icon: Wrench },
   { href: "/reports", label: "Reports", icon: FileText },
 ] as const;

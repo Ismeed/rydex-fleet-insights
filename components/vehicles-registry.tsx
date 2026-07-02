@@ -250,17 +250,15 @@ export function VehiclesRegistry({ initialVehicles, drivers, owners, currentUser
           </select>
         </div>
 
-        {currentUser?.role !== "OPERATIONS_MANAGER" && (
-          <button
-            onClick={handleOpenAddModal}
-            className="flex items-center justify-center gap-2 px-4 py-2 bg-brand hover:bg-brand-hover text-white text-sm font-semibold rounded-lg shadow-sm transition-all shrink-0 active:scale-95"
-          >
-            <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            Register Vehicle
-          </button>
-        )}
+        <button
+          onClick={handleOpenAddModal}
+          className="flex items-center justify-center gap-2 px-4 py-2 bg-brand hover:bg-brand-hover text-white text-sm font-semibold rounded-lg shadow-sm transition-all shrink-0 active:scale-95"
+        >
+          <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          Register Vehicle
+        </button>
       </div>
 
       {/* Main Table */}
@@ -341,7 +339,7 @@ export function VehiclesRegistry({ initialVehicles, drivers, owners, currentUser
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                           </svg>
                         </button>
-                        {v.status !== "INACTIVE" && currentUser?.role !== "OPERATIONS_MANAGER" && (
+                        {v.status !== "INACTIVE" && (
                           <button
                             onClick={() => handleDisableVehicle(v.id)}
                             className="p-1 hover:bg-surface rounded text-muted-foreground hover:text-red-600 transition-colors"
@@ -472,7 +470,7 @@ export function VehiclesRegistry({ initialVehicles, drivers, owners, currentUser
                       name="id"
                       placeholder="e.g. ryd-kt-015"
                       required
-                      disabled={modalMode === "edit" || currentUser?.role === "OPERATIONS_MANAGER"}
+                      disabled={modalMode === "edit"}
                       className="w-full px-3 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand font-mono uppercase disabled:bg-gray-50 disabled:text-muted-foreground"
                       value={formData.id}
                       onChange={handleInputChange}
@@ -488,8 +486,7 @@ export function VehiclesRegistry({ initialVehicles, drivers, owners, currentUser
                       name="vehicleNumber"
                       placeholder="e.g. KT-015"
                       required
-                      disabled={currentUser?.role === "OPERATIONS_MANAGER"}
-                      className="w-full px-3 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand font-mono uppercase disabled:bg-gray-50 disabled:text-muted-foreground"
+                      className="w-full px-3 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand font-mono uppercase"
                       value={formData.vehicleNumber}
                       onChange={handleInputChange}
                     />
@@ -504,8 +501,7 @@ export function VehiclesRegistry({ initialVehicles, drivers, owners, currentUser
                       name="plateNumber"
                       placeholder="e.g. KAT-115-XA"
                       required
-                      disabled={currentUser?.role === "OPERATIONS_MANAGER"}
-                      className="w-full px-3 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand font-mono uppercase disabled:bg-gray-50 disabled:text-muted-foreground"
+                      className="w-full px-3 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand font-mono uppercase"
                       value={formData.plateNumber}
                       onChange={handleInputChange}
                     />
@@ -535,8 +531,7 @@ export function VehiclesRegistry({ initialVehicles, drivers, owners, currentUser
                     </label>
                     <select
                       name="vehicleType"
-                      disabled={currentUser?.role === "OPERATIONS_MANAGER"}
-                      className="w-full px-3 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand bg-white disabled:bg-gray-50 disabled:text-muted-foreground"
+                      className="w-full px-3 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand bg-white"
                       value={formData.vehicleType}
                       onChange={handleInputChange}
                     >
@@ -553,8 +548,7 @@ export function VehiclesRegistry({ initialVehicles, drivers, owners, currentUser
                     </label>
                     <select
                       name="fuelType"
-                      disabled={currentUser?.role === "OPERATIONS_MANAGER"}
-                      className="w-full px-3 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand bg-white disabled:bg-gray-50 disabled:text-muted-foreground"
+                      className="w-full px-3 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand bg-white"
                       value={formData.fuelType}
                       onChange={handleInputChange}
                     >
@@ -572,8 +566,7 @@ export function VehiclesRegistry({ initialVehicles, drivers, owners, currentUser
                     </label>
                     <select
                       name="ownerId"
-                      disabled={currentUser?.role === "OPERATIONS_MANAGER"}
-                      className="w-full px-3 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand bg-white disabled:bg-gray-50 disabled:text-muted-foreground"
+                      className="w-full px-3 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand bg-white"
                       value={formData.ownerId}
                       onChange={handleInputChange}
                     >

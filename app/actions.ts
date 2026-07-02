@@ -203,8 +203,8 @@ export async function recordDailyRevenueAction(prevState: any, formData: FormDat
 export async function createVehicleAction(prevState: any, formData: FormData) {
   try {
     const user = await getCurrentUser();
-    if (!user || (user.role !== "SUPER_ADMIN" && user.role !== "COMPANY_OWNER")) {
-      return { success: false, error: "Unauthorized. Workspace admin rights required." };
+    if (!user || (user.role !== "SUPER_ADMIN" && user.role !== "COMPANY_OWNER" && user.role !== "OPERATIONS_MANAGER")) {
+      return { success: false, error: "Unauthorized. Operational permissions required." };
     }
 
     const companyId = user.companyId || (formData.get("companyId") as string);
@@ -280,14 +280,7 @@ export async function updateVehicleAction(prevState: any, formData: FormData) {
     const assignedDriverId = formData.get("assignedDriverId") as string;
     const status = formData.get("status") as string;
 
-    // OPERATIONS_MANAGER can only update status and driver assignment
-    if (user.role === "OPERATIONS_MANAGER") {
-      await dbService.updateVehicle(id, {
-        assignedDriverId: assignedDriverId === "none" ? null : assignedDriverId || null,
-        status: status || undefined,
-      });
-    } else {
-      const vehicleNumber = formData.get("vehicleNumber") as string;
+    const vehicleNumber = formData.get("vehicleNumber") as string;
       const plateNumber = formData.get("plateNumber") as string;
       const vehicleType = formData.get("vehicleType") as string;
       const fuelType = formData.get("fuelType") as string;
@@ -311,7 +304,6 @@ export async function updateVehicleAction(prevState: any, formData: FormData) {
         purchaseDate: purchaseDate || undefined,
         purchasePrice: isNaN(purchasePrice) ? undefined : purchasePrice,
       });
-    }
 
     revalidatePath("/vehicles");
     revalidatePath(`/vehicles/${id}`);
@@ -325,8 +317,8 @@ export async function updateVehicleAction(prevState: any, formData: FormData) {
 export async function disableVehicleAction(prevState: any, formData: FormData) {
   try {
     const user = await getCurrentUser();
-    if (!user || (user.role !== "SUPER_ADMIN" && user.role !== "COMPANY_OWNER")) {
-      return { success: false, error: "Unauthorized. Workspace admin rights required." };
+    if (!user || (user.role !== "SUPER_ADMIN" && user.role !== "COMPANY_OWNER" && user.role !== "OPERATIONS_MANAGER")) {
+      return { success: false, error: "Unauthorized. Operational permissions required." };
     }
 
     const id = formData.get("id") as string;
